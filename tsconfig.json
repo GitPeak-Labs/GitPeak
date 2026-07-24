@@ -9,6 +9,10 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
+
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+
     "types": ["bun"]
   },
   "exclude": ["./.svelte-kit/**", "node_modules/**"]
