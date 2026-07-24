@@ -28,12 +28,11 @@ function getRatelimit(): Ratelimit | null {
   return ratelimit
 }
 
-// Shared across /og, /api/readme (and /wallpaper): these are public, unauthenticated
-// endpoints that call an upstream GitHub stats proxy per request, so the real risk is
-// username-enumeration scripts hammering that upstream rather than normal traffic.
 export async function checkRateLimit(identifier: string): Promise<RateLimitResult> {
   const limiter = getRatelimit()
-  if (!limiter) return { success: true, limit: 0, remaining: 0, reset: 0 }
+
+  if (!limiter) 
+    return { success: true, limit: 0, remaining: 0, reset: 0 }
 
   const { success, limit, remaining, reset } = await limiter.limit(identifier)
   return { success, limit, remaining, reset }

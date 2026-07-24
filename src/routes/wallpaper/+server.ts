@@ -17,11 +17,6 @@ export const GET: RequestHandler = async (event) => {
   const format = getWallpaperFormat(event.url.searchParams.get('format'))
   if (!format) return new Response('Invalid format', { status: 400 })
 
-  // Optional: rasterize at a smaller pixel size for the live preview <img>, so the browser
-  // never has to bitmap-downscale a full-resolution PNG (which mangles thin serif strokes).
-  // The SVG is still laid out at the format's full width/height either way — only resvg's
-  // output raster size changes — so preview and download stay visually identical, just
-  // different pixel densities.
   const requestedPreviewWidth = Number(event.url.searchParams.get('previewWidth'))
   const rasterWidth =
     Number.isFinite(requestedPreviewWidth) && requestedPreviewWidth > 0
