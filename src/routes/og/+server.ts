@@ -2,6 +2,7 @@ import { render } from 'svelte/server'
 import { dev } from '$app/environment'
 import { Resvg } from '@resvg/resvg-js'
 import { createGithubClient } from '$lib/github/api/github-client'
+import { GHFETCH_STATS_URL } from '$lib/github/api/config'
 import { PRESET_THEMES } from '$lib/theme/theme-manager'
 import OgCard from '$lib/readme/OgCard.svelte'
 import { buildOgStyles } from '$lib/readme/readme-font-styles'
@@ -26,7 +27,7 @@ export const GET: RequestHandler = async (event) => {
   const theme = PRESET_THEMES[requestedTheme] || PRESET_THEMES['Rosé Pine']
 
   const client = createGithubClient({
-    apiUrl: 'https://ghfetch.carlosranara.workers.dev/v1/stats',
+    apiUrl: GHFETCH_STATS_URL,
     requestTimeoutMilliseconds: 8000,
   })
 

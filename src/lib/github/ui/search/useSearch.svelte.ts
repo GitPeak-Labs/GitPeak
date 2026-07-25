@@ -1,8 +1,9 @@
 import { createQuery } from '@tanstack/svelte-query'
 import { createGithubClient } from '$lib/github/api/github-client'
+import { GHFETCH_STATS_URL } from '$lib/github/api/config'
 
 const client = createGithubClient({
-  apiUrl: 'https://ghfetch.carlosranara.workers.dev/v1/stats',
+  apiUrl: GHFETCH_STATS_URL,
   requestTimeoutMilliseconds: 8000,
 })
 

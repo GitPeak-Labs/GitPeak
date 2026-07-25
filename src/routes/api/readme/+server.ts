@@ -1,5 +1,6 @@
 import { render } from 'svelte/server'
 import { createGithubClient } from '$lib/github/api/github-client'
+import { GHFETCH_STATS_URL } from '$lib/github/api/config'
 import { PRESET_THEMES } from '$lib/theme/theme-manager'
 import ReadmeCard from '$lib/readme/ReadmeCard.svelte'
 import { buildReadmeFontStyles } from '$lib/readme/readme-font-styles'
@@ -24,7 +25,7 @@ export const GET: RequestHandler = async (event) => {
   const theme = PRESET_THEMES[requestedTheme] || PRESET_THEMES['Rosé Pine']
 
   const client = createGithubClient({
-    apiUrl: 'https://ghfetch.carlosranara.workers.dev/v1/stats',
+    apiUrl: GHFETCH_STATS_URL,
     requestTimeoutMilliseconds: 8000,
   })
 
