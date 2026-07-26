@@ -14,7 +14,9 @@ export function useSearch() {
     queryKey: ['github-stats', currentUsername],
     queryFn: async () => {
       const result = await client.fetchStats(currentUsername)
-      if (!result.ok) throw new Error(result.error)
+
+      if (!result.ok) 
+        throw new Error(result.error.message)
 
       return result.value
     },
@@ -22,7 +24,8 @@ export function useSearch() {
   }))
 
   function onSearch(username: string) {
-    if (!username) return
+    if (!username) 
+      return
 
     currentUsername = username
   }

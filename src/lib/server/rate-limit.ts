@@ -21,7 +21,7 @@ function getRatelimit(): Ratelimit | null {
 
   ratelimit = new Ratelimit({
     redis: Redis.fromEnv(),
-    limiter: Ratelimit.slidingWindow(20, '60 s'),
+    limiter: Ratelimit.slidingWindow(60, '60 s'),
     prefix: 'gitpeak-image-endpoints',
   })
 
@@ -31,7 +31,8 @@ function getRatelimit(): Ratelimit | null {
 export async function checkRateLimit(identifier: string): Promise<RateLimitResult> {
   const limiter = getRatelimit()
 
-  if (!limiter) return { success: true, limit: 0, remaining: 0, reset: 0 }
+  if (!limiter) 
+    return { success: true, limit: 0, remaining: 0, reset: 0 }
 
   const { success, limit, remaining, reset } = await limiter.limit(identifier)
   return { success, limit, remaining, reset }

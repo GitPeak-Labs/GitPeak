@@ -13,10 +13,14 @@ import type { RequestHandler } from './$types'
 
 export const GET: RequestHandler = async (event) => {
   const username = event.url.searchParams.get('username')?.trim()
-  if (!username) return new Response('Missing username', { status: 400 })
+
+  if (!username) 
+    return new Response('Missing username', { status: 400 })
 
   const format = getWallpaperFormat(event.url.searchParams.get('format'))
-  if (!format) return new Response('Invalid format', { status: 400 })
+
+  if (!format) 
+    return new Response('Invalid format', { status: 400 })
 
   const requestedPreviewWidth = Number(event.url.searchParams.get('previewWidth'))
   const rasterWidth =
@@ -26,11 +30,12 @@ export const GET: RequestHandler = async (event) => {
   const isPreview = rasterWidth !== format.width
 
   const rateLimit = await checkRateLimit(event.getClientAddress())
+
   if (!rateLimit.success) {
     const retryAfterSeconds = Math.max(0, Math.ceil((rateLimit.reset - Date.now()) / 1000))
     return new Response('Too Many Requests', {
       status: 429,
-      headers: { 'Retry-After': String(retryAfterSeconds) },
+      headers: { 'Retry-After': String(retryAfterSeconds), 'Cache-Control': 'no-store' },
     })
   }
 
@@ -43,7 +48,11 @@ export const GET: RequestHandler = async (event) => {
   })
 
   const result = await client.fetchStats(username)
-  if (!result.ok) return new Response('User not found', { status: 404 })
+
+  if (!result.ok) {
+    const status = result.error.kind === 'not-found' ? 404 : 502
+    return new Response(result.error.message, { status, headers: { 'Cache-Control': 'no-store' } })
+  }
 
   const statistics = result.value
   statistics.languages = Array.isArray(statistics.languages) ? statistics.languages : []
