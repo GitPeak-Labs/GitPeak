@@ -75,7 +75,7 @@ async function attemptFetchStats(
 
     const rawResponse = await response.json()
 
-    if (!rawResponse.ok) 
+    if (!rawResponse.ok)
       return error({ message: 'Could not load this profile — try again', kind: 'transient' })
 
     const parsedStats = githubStatsSchema.safeParse(keysToCamel(rawResponse.data))
@@ -87,7 +87,7 @@ async function attemptFetchStats(
     clearTimeout(timeoutId)
 
     if (caughtError instanceof Error) {
-      if (caughtError.name === 'AbortError') 
+      if (caughtError.name === 'AbortError')
         return error({ message: 'Request timed out', kind: 'transient' })
 
       return error({ message: caughtError.message, kind: 'transient' })
@@ -98,11 +98,9 @@ async function attemptFetchStats(
 }
 
 function isRetryable(result: Result<GithubStats, GithubClientError>): boolean {
-  if (result.ok) 
-    return false
+  if (result.ok) return false
 
-  if (result.error.kind !== 'transient') 
-    return false
+  if (result.error.kind !== 'transient') return false
 
   return result.error.message !== 'Request timed out'
 }
@@ -113,8 +111,7 @@ export function createGithubClient(config: GithubClientConfig) {
       const sanitizedUsername = username.trim().toLowerCase()
 
       const firstAttempt = await attemptFetchStats(config, sanitizedUsername)
-      if (!isRetryable(firstAttempt)) 
-        return firstAttempt
+      if (!isRetryable(firstAttempt)) return firstAttempt
 
       await sleep(RETRY_DELAY_MILLISECONDS)
       return attemptFetchStats(config, sanitizedUsername)

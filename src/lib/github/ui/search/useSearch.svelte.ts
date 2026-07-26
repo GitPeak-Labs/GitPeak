@@ -15,8 +15,7 @@ export function useSearch() {
     queryFn: async () => {
       const result = await client.fetchStats(currentUsername)
 
-      if (!result.ok) 
-        throw new Error(result.error.message)
+      if (!result.ok) throw new Error(result.error.message)
 
       return result.value
     },
@@ -24,8 +23,7 @@ export function useSearch() {
   }))
 
   function onSearch(username: string) {
-    if (!username) 
-      return
+    if (!username) return
 
     currentUsername = username
   }

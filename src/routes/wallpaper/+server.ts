@@ -14,13 +14,11 @@ import type { RequestHandler } from './$types'
 export const GET: RequestHandler = async (event) => {
   const username = event.url.searchParams.get('username')?.trim()
 
-  if (!username) 
-    return new Response('Missing username', { status: 400 })
+  if (!username) return new Response('Missing username', { status: 400 })
 
   const format = getWallpaperFormat(event.url.searchParams.get('format'))
 
-  if (!format) 
-    return new Response('Invalid format', { status: 400 })
+  if (!format) return new Response('Invalid format', { status: 400 })
 
   const requestedPreviewWidth = Number(event.url.searchParams.get('previewWidth'))
   const rasterWidth =

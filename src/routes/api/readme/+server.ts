@@ -11,8 +11,7 @@ import type { RequestHandler } from './$types'
 export const GET: RequestHandler = async (event) => {
   const username = event.url.searchParams.get('username')?.trim()
 
-  if (!username) 
-    return new Response('Missing username', { status: 400 })
+  if (!username) return new Response('Missing username', { status: 400 })
 
   const rateLimit = await checkRateLimit(username.toLowerCase())
 
