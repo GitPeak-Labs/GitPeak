@@ -3,6 +3,7 @@ import { createGithubClient } from '$lib/github/api/github-client'
 import { GHFETCH_STATS_URL } from '$lib/github/api/config'
 import { PRESET_THEMES } from '$lib/theme/theme-manager'
 import ReadmeCard from '$lib/readme/ReadmeCard.svelte'
+import ReadmeFallbackCard from '$lib/readme/ReadmeFallbackCard.svelte'
 import { buildReadmeFontStyles } from '$lib/readme/readme-font-styles'
 import { fetchAsDataUri, getReadmeFonts } from '$lib/readme/server-assets'
 import { checkRateLimit } from '$lib/server/rate-limit'
@@ -33,8 +34,27 @@ export const GET: RequestHandler = async (event) => {
 
   const result = await client.fetchStats(username)
   if (!result.ok) {
-    const status = result.error.kind === 'not-found' ? 404 : 502
-    return new Response(result.error.message, { status, headers: { 'Cache-Control': 'no-store' } })
+    if (result.error.kind === 'not-found') {
+      return new Response(result.error.message, {
+        status: 404,
+        headers: { 'Cache-Control': 'no-store' },
+      })
+    }
+
+    // Transient upstream failure: render a themed placeholder instead of an error status,
+    // so GitHub's camo proxy caches a valid image rather than freezing a broken-image icon
+    // into every README that embeds this card until camo's own cache expires.
+    const { body } = render(ReadmeFallbackCard, { props: { username, theme } })
+    const fontStyles = buildReadmeFontStyles('', '', theme)
+    const svg = body.replace('<defs>', `<defs><style>${fontStyles}</style>`)
+
+    return new Response(svg, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
+      },
+    })
   }
 
   const statistics = result.value
