@@ -13,7 +13,8 @@
     "check:native": "node_modules/typescript-native/bin/tsc --noEmit -p tsconfig.native.json",
     "test": "bun test",
     "lint": "prettier --check . && eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "nuke": "bun run format && bun run lint && bun run check && bun run check:native && bun run test && bun run build"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.3",
