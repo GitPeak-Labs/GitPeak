@@ -1,7 +1,7 @@
 <script lang="ts">
   import { X, Download } from 'lucide-svelte'
   import { WALLPAPER_FORMATS, type WallpaperFormat } from '$lib/wallpaper/wallpaper-formats'
-  import { getSavedPresetName } from '$lib/theme/theme-manager'
+  import { getActivePresetName } from '$lib/theme/theme-state.svelte'
   import { Button } from '$lib/components/ui/button'
   import { toast } from 'svelte-sonner'
   import { cn } from '$lib/ui/styling/class-merger'
@@ -14,7 +14,7 @@
     onClose: () => void
   } = $props()
 
-  const themeName = getSavedPresetName() ?? 'Rosé Pine'
+  const themeName = $derived(getActivePresetName() ?? 'Rosé Pine')
 
   let selectedFormat = $state<WallpaperFormat>(WALLPAPER_FORMATS[0])
   let isGenerating = $state(false)

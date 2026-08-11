@@ -11,6 +11,7 @@
     parseThemeFromCSS,
     type ThemeTokens,
   } from '$lib/theme/theme-manager'
+  import { setActivePresetName } from '$lib/theme/theme-state.svelte'
   import { Palette, RotateCcw, ChevronDown } from 'lucide-svelte'
   import { cn } from '$lib/ui/styling/class-merger'
 
@@ -18,6 +19,8 @@
   let tokens = $state<ThemeTokens>({ ...PRESET_THEMES['Rosé Pine'] })
   let activePreset = $state<string | null>(null)
   let activeKey = $state<string | null>(null)
+  let panelElement: HTMLDivElement | undefined = $state()
+  let toggleElement: HTMLButtonElement | undefined = $state()
 
   const tokenKeys = Object.keys(TOKEN_LABELS)
 
@@ -34,12 +37,14 @@
     activePreset = null
     applyTokens(tokens)
     saveCustomTokens(tokens)
+    setActivePresetName(null)
   }
 
   function applyPreset(name: string) {
     activePreset = name
     tokens = { ...PRESET_THEMES[name] }
     applyPresetTheme(name)
+    setActivePresetName(name)
   }
 
   function reset() {
@@ -61,6 +66,7 @@
       activePreset = null
       applyTokens(tokens)
       saveCustomTokens(tokens)
+      setActivePresetName(null)
     }
     reader.readAsText(file)
   }
@@ -87,10 +93,21 @@
     const value = (e as CustomEvent).detail.value
     if (value) update(key, value)
   }
+
+  function handleOutsideClick(e: MouseEvent) {
+    if (!open) return
+    const target = e.target as Node
+    if (panelElement?.contains(target) || toggleElement?.contains(target)) return
+    open = false
+    activeKey = null
+  }
 </script>
+
+<svelte:window onclick={handleOutsideClick} />
 
 <!-- Toggle button -->
 <button
+  bind:this={toggleElement}
   onclick={() => (open = !open)}
   class={cn(
     'glass flex items-center gap-2 rounded-xl border px-3',
@@ -110,18 +127,7 @@
 
 {#if open}
   <div
-    class="fixed inset-0 z-40"
-    role="button"
-    tabindex="-1"
-    onclick={() => {
-      open = false
-      activeKey = null
-    }}
-    onkeydown={() => {}}
-    aria-label="Close theme panel"
-  ></div>
-
-  <div
+    bind:this={panelElement}
     class={cn(
       'fixed top-16 right-2 left-2 z-50 flex max-h-[80vh]',
       'flex-col overflow-hidden rounded-2xl sm:right-4',
