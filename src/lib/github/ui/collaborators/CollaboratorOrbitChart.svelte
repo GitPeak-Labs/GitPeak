@@ -87,7 +87,8 @@
         <Tooltip.Trigger
           onmouseenter={() => (hoveredIndex = index)}
           onmouseleave={() => (hoveredIndex = null)}
-          onclick={() => window.open(`https://gitpeak.vercel.app/?username=${node.login}`, '_blank')}
+          onclick={() =>
+            window.open(`https://gitpeak.vercel.app/?username=${node.login}`, '_blank')}
         >
           {#snippet child({ props }: { props: Record<string, unknown> })}
             <g
