@@ -231,7 +231,8 @@
                   `}
                   onmouseenter={() => (hoveredIndex = index)}
                   onmouseleave={() => (hoveredIndex = null)}
-                  onclick={() => window.open(`https://github.com/${node.login}`, '_blank')}
+                  onclick={() =>
+                    window.open(`https://gitpeak.vercel.app/?username=${node.login}`, '_blank')}
                 >
                   <span
                     class={cn(
