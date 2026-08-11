@@ -56,9 +56,11 @@
 
 <div class="aurora-bg" aria-hidden="true"></div>
 
-<div class="fixed top-4 right-4 z-50">
-  <ThemeCustomizer />
-</div>
+{#if !showExporter}
+  <div class="fixed top-4 right-4 z-50">
+    <ThemeCustomizer />
+  </div>
+{/if}
 
 <main
   class={'mx-auto flex min-h-screen w-full max-w-[100vw] flex-col items-center ' +

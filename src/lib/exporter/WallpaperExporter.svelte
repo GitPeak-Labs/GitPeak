@@ -2,6 +2,7 @@
   import { X, Download } from 'lucide-svelte'
   import { WALLPAPER_FORMATS, type WallpaperFormat } from '$lib/wallpaper/wallpaper-formats'
   import { getActivePresetName } from '$lib/theme/theme-state.svelte'
+  import ThemeControls from '$lib/theme/ThemeControls.svelte'
   import { Button } from '$lib/components/ui/button'
   import { toast } from 'svelte-sonner'
   import { cn } from '$lib/ui/styling/class-merger'
@@ -166,6 +167,13 @@
         {@render formatList()}
       </div>
 
+      <div class="theme-strip-header border-bottom">
+        <span class="eyebrow">Theme</span>
+      </div>
+      <div class="theme-strip border-bottom">
+        <ThemeControls />
+      </div>
+
       <main
         class="preview-area"
         bind:clientWidth={previewWidthPixels}
@@ -193,9 +201,14 @@
           </Button>
         </div>
 
-        <p class="section-label">Format</p>
-        <div class="flex flex-1 flex-col gap-1">
-          {@render formatList(true)}
+        <div class="sidebar-scroll">
+          <p class="section-label">Format</p>
+          <div class="flex flex-col gap-1">
+            {@render formatList(true)}
+          </div>
+
+          <p class="section-label mt-5">Theme</p>
+          <ThemeControls />
         </div>
 
         <div class="sidebar-footer border-top">
@@ -275,12 +288,17 @@
   }
 
   .section-label {
+    display: block;
     font-size: 9px;
     font-family: 'DM Mono', monospace;
     text-transform: uppercase;
     letter-spacing: 0.18em;
     color: var(--muted);
-    margin: 0 0 8px;
+    margin-bottom: 8px;
+  }
+
+  .section-label.mt-5 {
+    margin-top: 20px;
   }
 
   .dim-label {
@@ -341,6 +359,22 @@
 
   .format-button--active .format-subtitle {
     color: color-mix(in srgb, var(--iris) 65%, transparent);
+  }
+
+  .theme-strip-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--base) 40%, transparent);
+  }
+
+  .theme-strip {
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 12px;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--base) 40%, transparent);
   }
 
   .download-button {
@@ -424,13 +458,22 @@
   }
 
   .sidebar {
-    width: 256px;
+    width: 360px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     padding: 20px;
     border-right: 1px solid color-mix(in srgb, var(--highlight-med) 40%, transparent);
     background: color-mix(in srgb, var(--base) 40%, transparent);
+  }
+
+  .sidebar-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    padding-right: 4px;
+    margin-right: -4px;
   }
 
   .sidebar-footer {
