@@ -87,7 +87,7 @@
         <Tooltip.Trigger
           onmouseenter={() => (hoveredIndex = index)}
           onmouseleave={() => (hoveredIndex = null)}
-          onclick={() => window.open(`https://github.com/${node.login}`, '_blank')}
+          onclick={() => window.open(`https://gitpeak.vercel.app/?username=${node.login}`, '_blank')}
         >
           {#snippet child({ props }: { props: Record<string, unknown> })}
             <g
@@ -99,7 +99,7 @@
               onkeydown={(event: KeyboardEvent) => {
                 const isTrigger = event.key === 'Enter' || event.key === ' '
                 if (!isTrigger) return
-                window.open(`https://github.com/${node.login}`, '_blank')
+                window.open(`https://gitpeak.vercel.app/?username=${node.login}`, '_blank')
               }}
             >
               <circle
