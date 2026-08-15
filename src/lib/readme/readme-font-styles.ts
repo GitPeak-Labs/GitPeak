@@ -36,20 +36,33 @@ function buildCardStyles(theme: ThemeTokens): string {
   `
 }
 
-// For SVG served directly to browsers (api/readme) — browsers resolve @font-face data URIs natively.
+// For SVG served directly to browsers (api/readme) — browsers resolve @font-face data URIs
+// natively.
 export function buildReadmeFontStyles(
-  monoFontB64: string,
-  serifFontB64: string,
+  monoFontDataUri: string,
+  serifFontDataUri: string,
   theme: ThemeTokens,
 ): string {
   return `
-    @font-face {
+    ${
+      monoFontDataUri
+        ? `@font-face {
       font-family: 'JetBrains Mono';
-      src: url(data:font/truetype;charset=utf-8;base64,${monoFontB64}) format('truetype');
+      src: url('${monoFontDataUri}') format('woff2');
+      font-weight: 400;
+      font-style: normal;
+    }`
+        : ''
     }
-    @font-face {
+    ${
+      serifFontDataUri
+        ? `@font-face {
       font-family: 'Instrument Serif';
-      src: url(data:font/truetype;charset=utf-8;base64,${serifFontB64}) format('truetype');
+      src: url('${serifFontDataUri}') format('woff2');
+      font-weight: 400;
+      font-style: normal;
+    }`
+        : ''
     }
     ${buildCardStyles(theme)}
   `

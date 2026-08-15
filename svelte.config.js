@@ -26,7 +26,7 @@ const config = {
           'https://cdn.simpleicons.org',
           'https://cdn.jsdelivr.net',
         ],
-        'font-src': ['self', 'https://fonts.gstatic.com'],
+        'font-src': ['self', 'data:', 'https://fonts.gstatic.com'],
         'style-src': ['self', 'unsafe-inline', 'https://fonts.googleapis.com'],
         'script-src': ['self', 'unsafe-inline', 'unsafe-eval'],
         'worker-src': ['self', 'blob:'],

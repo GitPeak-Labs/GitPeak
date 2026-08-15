@@ -1,5 +1,6 @@
 import { Ratelimit } from '@upstash/ratelimit'
-import { Redis } from '@upstash/redis'
+import { withTimeout } from './promise-timeout'
+import { getRedis } from './redis'
 
 export interface RateLimitResult {
   success: boolean
@@ -9,18 +10,20 @@ export interface RateLimitResult {
 }
 
 let ratelimit: Ratelimit | null | undefined
+const RATE_LIMIT_TIMEOUT_MILLISECONDS = 750
 
 function getRatelimit(): Ratelimit | null {
   if (ratelimit !== undefined) return ratelimit
 
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+  const redis = getRedis()
+  if (!redis) {
     console.warn('[rate-limit] UPSTASH_REDIS_REST_* not set — rate limiting disabled')
     ratelimit = null
     return ratelimit
   }
 
   ratelimit = new Ratelimit({
-    redis: Redis.fromEnv(),
+    redis,
     limiter: Ratelimit.slidingWindow(60, '60 s'),
     prefix: 'gitpeak-image-endpoints',
   })
@@ -33,6 +36,16 @@ export async function checkRateLimit(identifier: string): Promise<RateLimitResul
 
   if (!limiter) return { success: true, limit: 0, remaining: 0, reset: 0 }
 
-  const { success, limit, remaining, reset } = await limiter.limit(identifier)
-  return { success, limit, remaining, reset }
+  try {
+    const { success, limit, remaining, reset } = await withTimeout(
+      limiter.limit(identifier),
+      RATE_LIMIT_TIMEOUT_MILLISECONDS,
+      'Rate-limit store timed out',
+    )
+    return { success, limit, remaining, reset }
+  } catch (error) {
+    // An unavailable rate-limit store must never take down a public image endpoint.
+    console.warn('[rate-limit] Check failed — allowing request:', error)
+    return { success: true, limit: 0, remaining: 0, reset: 0 }
+  }
 }

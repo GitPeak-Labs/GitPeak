@@ -14,6 +14,7 @@
     "test": "bun test",
     "lint": "prettier --check . && eslint .",
     "format": "prettier --write .",
+    "fonts:download": "bun scripts/download-server-fonts.ts",
     "nuke": "bun run format && bun run lint && bun run check && bun run check:native && bun run test && bun run build"
   },
   "devDependencies": {
@@ -57,6 +58,8 @@
     "vite": "^7.3.1"
   },
   "dependencies": {
+    "@fontsource/instrument-serif": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "@resvg/resvg-js": "^2.6.2",
     "@tanstack/svelte-query": "^6.1.36",
     "@upstash/ratelimit": "^2.0.8",
