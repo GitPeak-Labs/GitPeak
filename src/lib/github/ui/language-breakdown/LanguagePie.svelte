@@ -2,7 +2,10 @@
   import type { GitHubLanguage, InvolvedRepo, Collaborator } from '$lib/github/models/github-stats'
   import { useLanguagePie } from './useLanguagePie.svelte'
   import { calculateOrbitNodes } from '../../models/orbit-calculations'
-  import { calculateCollaboratorOrbitNodes } from '../../models/collaborator-orbit-calculations'
+  import {
+    calculateCollaboratorOrbitNodes,
+    type CollaboratorSortMode,
+  } from '../../models/collaborator-orbit-calculations'
   import LanguagePieChart from './LanguagePieChart.svelte'
   import RecencyOrbitChart from './RecencyOrbitChart.svelte'
   import CollaboratorOrbitChart from '$lib/github/ui/collaborators/CollaboratorOrbitChart.svelte'
@@ -11,7 +14,7 @@
   import { Card, CardContent, CardHeader } from '$lib/components/ui/card'
   import { Tabs, TabsList, TabsTrigger } from '$lib/components/ui/tabs'
   import * as Avatar from '$lib/components/ui/avatar'
-  import { Orbit, Palette, Globe, User, Users, Handshake } from 'lucide-svelte'
+  import { Orbit, Palette, Globe, User, Users, Handshake, GitCommit, Repeat2 } from 'lucide-svelte'
   import { fade, scale } from 'svelte/transition'
   import * as Tooltip from '$lib/components/ui/tooltip'
 
@@ -31,6 +34,7 @@
 
   let viewMode = $state<'languages' | 'orbit' | 'collaborators'>('languages')
   let ownershipFilter = $state<'all' | 'owned' | 'others'>('all')
+  let collaboratorSortMode = $state<CollaboratorSortMode>('commits')
   let hoveredIndex = $state<number | null>(null)
 
   const pieManager = useLanguagePie(() => languages)
@@ -61,6 +65,7 @@
       pieManager.dimensions.centerY,
       pieManager.dimensions.innerRadiusPixels,
       pieManager.dimensions.outerRadiusPixels,
+      collaboratorSortMode,
     ),
   )
 
@@ -138,6 +143,44 @@
         </button>
       </Tooltip.Trigger>
       <Tooltip.Content side="top" sideOffset={8}>Contributions</Tooltip.Content>
+    </Tooltip.Root>
+  </Tooltip.Provider>
+{/snippet}
+
+{#snippet collaboratorSortToggle()}
+  <Tooltip.Provider delayDuration={0}>
+    <Tooltip.Root>
+      <Tooltip.Trigger>
+        <button
+          class={cn(
+            'flex h-6 w-6 items-center justify-center rounded-full transition-all',
+            collaboratorSortMode === 'commits'
+              ? 'bg-iris/20 text-iris'
+              : 'text-muted hover:text-subtle hover:bg-black/5',
+          )}
+          onclick={() => (collaboratorSortMode = 'commits')}
+        >
+          <GitCommit size={11} />
+        </button>
+      </Tooltip.Trigger>
+      <Tooltip.Content side="top" sideOffset={8}>Sort by Commits</Tooltip.Content>
+    </Tooltip.Root>
+
+    <Tooltip.Root>
+      <Tooltip.Trigger>
+        <button
+          class={cn(
+            'flex h-6 w-6 items-center justify-center rounded-full transition-all',
+            collaboratorSortMode === 'frequency'
+              ? 'bg-iris/20 text-iris'
+              : 'text-muted hover:text-subtle hover:bg-black/5',
+          )}
+          onclick={() => (collaboratorSortMode = 'frequency')}
+        >
+          <Repeat2 size={11} />
+        </button>
+      </Tooltip.Trigger>
+      <Tooltip.Content side="top" sideOffset={8}>Sort by Collab Frequency</Tooltip.Content>
     </Tooltip.Root>
   </Tooltip.Provider>
 {/snippet}
@@ -277,6 +320,13 @@
           >
             {@render ownershipToggle()}
           </div>
+        {:else if viewMode === 'collaborators'}
+          <div
+            transition:scale={{ duration: 250, start: 0.9 }}
+            class="bg-base/80 border-subtle/10 absolute -bottom-16 left-1/2 hidden -translate-x-1/2 items-center gap-0.5 rounded-full border p-1 shadow-lg backdrop-blur-md sm:flex"
+          >
+            {@render collaboratorSortToggle()}
+          </div>
         {/if}
       </div>
 
@@ -288,6 +338,14 @@
             {@render ownershipToggle()}
           </div>
         </div>
+      {:else if viewMode === 'collaborators'}
+        <div class="flex sm:hidden" transition:fade={{ duration: 200 }}>
+          <div
+            class="bg-base/80 border-subtle/10 flex items-center gap-0.5 rounded-full border p-1 shadow-lg backdrop-blur-md"
+          >
+            {@render collaboratorSortToggle()}
+          </div>
+        </div>
       {/if}
 
       <div class="w-full sm:w-64">
@@ -296,6 +354,7 @@
           slices={pieManager.slices}
           {orbitNodes}
           collaboratorNodes={collaboratorOrbitNodes}
+          {collaboratorSortMode}
           bind:hoveredIndex
         />
       </div>

@@ -3,7 +3,10 @@
   import { fade } from 'svelte/transition'
   import type { PieSlice } from './useLanguagePie.svelte'
   import type { OrbitNode } from '../../models/orbit-calculations'
-  import type { CollaboratorOrbitNode } from '../../models/collaborator-orbit-calculations'
+  import type {
+    CollaboratorOrbitNode,
+    CollaboratorSortMode,
+  } from '../../models/collaborator-orbit-calculations'
   import { formatNumber } from '$lib/core/formatting/number-formatting'
   import { ScrollArea } from '$lib/components/ui/scroll-area'
   import * as Tooltip from '$lib/components/ui/tooltip'
@@ -16,12 +19,14 @@
     slices,
     orbitNodes,
     collaboratorNodes = [],
+    collaboratorSortMode = 'commits',
     hoveredIndex = $bindable(),
   }: {
     viewMode: 'languages' | 'orbit' | 'collaborators'
     slices: PieSlice[]
     orbitNodes: OrbitNode[]
     collaboratorNodes?: CollaboratorOrbitNode[]
+    collaboratorSortMode?: CollaboratorSortMode
     hoveredIndex: number | null
   } = $props()
 </script>
@@ -258,8 +263,12 @@
                       {node.login}
                     </span>
                     <span class="text-muted truncate text-[9px]">
-                      {node.sharedRepos}
-                      {node.sharedRepos === 1 ? 'repo' : 'repos'}
+                      {#if collaboratorSortMode === 'commits'}
+                        {node.sharedRepos}
+                        {node.sharedRepos === 1 ? 'repo' : 'repos'}
+                      {:else}
+                        {formatNumber(node.commits)} commits
+                      {/if}
                     </span>
                   </div>
 
@@ -267,7 +276,12 @@
                     class="shrink-0 text-right font-mono text-[10px] transition-colors"
                     style={`color: ${isNodeActive ? node.accentColor : 'var(--subtle)'};`}
                   >
-                    {formatNumber(node.commits)}
+                    {#if collaboratorSortMode === 'commits'}
+                      {formatNumber(node.commits)}
+                    {:else}
+                      {node.sharedRepos}
+                      {node.sharedRepos === 1 ? 'repo' : 'repos'}
+                    {/if}
                   </span>
                 </button>
               </Tooltip.Trigger>
