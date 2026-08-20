@@ -4,8 +4,12 @@ export interface TiltState {
   active: boolean
 }
 
-export function applyTilt(event: MouseEvent, element: HTMLElement): TiltState {
-  const boundaryRect = element.getBoundingClientRect()
+export function applyTilt(
+  event: MouseEvent,
+  element: HTMLElement,
+  cachedRect?: DOMRect | null,
+): TiltState {
+  const boundaryRect = cachedRect ?? element.getBoundingClientRect()
   const positionX = event.clientX - boundaryRect.left
   const positionY = event.clientY - boundaryRect.top
 

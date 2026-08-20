@@ -1,5 +1,45 @@
 @import 'tailwindcss';
 
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/jetbrains-mono-var.woff2') format('woff2');
+  font-weight: 300 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DM Mono';
+  src: url('/fonts/dm-mono-300.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DM Mono';
+  src: url('/fonts/dm-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DM Mono';
+  src: url('/fonts/dm-mono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instrument Serif';
+  src: url('/fonts/instrument-serif-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --color-base: var(--base);
   --color-surface: var(--surface);
@@ -195,6 +235,30 @@
   }
 }
 
+@media (max-width: 639px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  .tilt-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: color-mix(in srgb, var(--surface) 85%, transparent) !important;
+  }
+
+  .glass {
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+  }
+
+  .aurora-bg::before,
+  .aurora-bg::after {
+    filter: blur(60px);
+  }
+}
+
 /* =========================================
    AESTHETICS & BACKGROUNDS
    ========================================= */
@@ -205,6 +269,7 @@
   z-index: -10;
   background-color: var(--base);
   overflow: hidden;
+  pointer-events: none;
 }
 
 .aurora-bg::before,
@@ -214,6 +279,8 @@
   border-radius: 50%;
   filter: blur(120px);
   animation: drift 25s ease-in-out infinite;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
 }
 
 .aurora-bg::before {

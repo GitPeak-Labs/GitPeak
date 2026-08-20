@@ -67,9 +67,11 @@ export function calculateCollaboratorOrbitNodes(
     const metricShare = metric / totalMetric
     const coreSizePixels = Math.max(2.5, Math.min(6, 2.5 + Math.sqrt(metricShare) * 10))
     const haloSizePixels = coreSizePixels * 2
+    const sortedRepos = [...collaborator.repos].sort((a, b) => b.commits - a.commits)
 
     return {
       ...collaborator,
+      repos: sortedRepos,
       positionX,
       positionY,
       orbitRadius,

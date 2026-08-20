@@ -10,28 +10,28 @@
   let {
     statistics,
     username,
-    onExport,
   }: {
     statistics: GithubStats
     username: string
-    onExport: () => void
   } = $props()
 </script>
 
 <div class="mx-auto w-full max-w-275">
   <div class="fade-in-up mb-4 flex w-full justify-end [animation-delay:60ms]">
-    <button
-      onclick={onExport}
+    <!-- eslint-disable svelte/no-navigation-without-resolve -->
+    <a
+      href="/wallpaper/export?username={username}"
       class={cn(
         'bg-surface/60 border-highlight-med/50 text-subtle flex items-center gap-2',
         'rounded-xl border px-3 py-2 font-mono text-xs tracking-[0.05em]',
-        'uppercase backdrop-blur-md transition-all duration-200',
+        'uppercase backdrop-blur-md transition-all duration-200 active:scale-95',
       )}
       aria-label="Export wallpaper"
     >
       <Download size={13} />
       <span>Wallpaper</span>
-    </button>
+    </a>
+    <!-- eslint-enable svelte/no-navigation-without-resolve -->
   </div>
 
   <div

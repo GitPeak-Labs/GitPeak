@@ -7,11 +7,10 @@
   import DashboardWidget from '$lib/github/ui/dashboard/DashboardWidget.svelte'
   import DashboardSkeleton from '$lib/ui/components/DashboardSkeleton.svelte'
   import ThemeCustomizer from '$lib/theme/ThemeCustomizer.svelte'
-  import WallpaperExporter from '$lib/exporter/WallpaperExporter.svelte'
+  import MobileThemeDial from '$lib/theme/MobileThemeDial.svelte'
 
   const searchManager = useSearch()
 
-  let showExporter = $state(false)
   let usernameFromUrl = $derived(page.url.searchParams.get('username'))
 
   $effect(() => {
@@ -56,15 +55,19 @@
 
 <div class="aurora-bg" aria-hidden="true"></div>
 
-{#if !showExporter}
-  <div class="fixed top-4 right-4 z-50">
-    <ThemeCustomizer />
-  </div>
-{/if}
+<div class="fixed top-4 right-4 z-50 hidden sm:block">
+  <ThemeCustomizer />
+</div>
+<div
+  class="fixed right-4 z-50 sm:hidden"
+  style="bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem);"
+>
+  <MobileThemeDial />
+</div>
 
 <main
   class={'mx-auto flex min-h-screen w-full max-w-[100vw] flex-col items-center ' +
-    'gap-8 overflow-x-hidden p-10 sm:p-16 md:gap-12 md:p-20'}
+    'gap-8 overflow-x-hidden px-4 py-8 sm:p-12 md:gap-12 md:p-20'}
 >
   <header class="fade-in-up flex flex-col items-center gap-2 px-2 text-center">
     <span
@@ -93,18 +96,10 @@
   {/if}
 
   {#if searchManager.stats}
-    <DashboardWidget
-      statistics={searchManager.stats}
-      username={searchManager.currentUsername}
-      onExport={() => (showExporter = true)}
-    />
+    <DashboardWidget statistics={searchManager.stats} username={searchManager.currentUsername} />
   {/if}
 
   {#if searchManager.noResults}
     <EmptyState username={searchManager.currentUsername} error={searchManager.error} />
   {/if}
 </main>
-
-{#if showExporter && searchManager.stats}
-  <WallpaperExporter login={searchManager.currentUsername} onClose={() => (showExporter = false)} />
-{/if}

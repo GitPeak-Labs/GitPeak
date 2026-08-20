@@ -25,9 +25,20 @@ function injectFontStyles(svg: string, theme: ThemeTokens): string {
   return svg.replace('<defs>', `<defs><style>${fontStyles}</style>`)
 }
 
+const STATIC_ERROR_SVG =
+  '<svg width="480" height="120" viewBox="0 0 480 120" xmlns="http://www.w3.org/2000/svg">' +
+  '<rect width="480" height="120" rx="12" fill="#191724"/>' +
+  '<text x="24" y="66" font-family="monospace" font-size="14" fill="#e0def4">' +
+  'GitPeak stats are temporarily unavailable</text></svg>'
+
 function renderFallback(username: string, theme: ThemeTokens): Response {
-  const { body } = render(ReadmeFallbackCard, { props: { username, theme } })
-  return createReadmeSvgResponse(injectFontStyles(body, theme), 'fallback')
+  try {
+    const { body } = render(ReadmeFallbackCard, { props: { username, theme } })
+    return createReadmeSvgResponse(injectFontStyles(body, theme), 'fallback')
+  } catch (fallbackError) {
+    console.error('[readme] Fallback card also failed to render:', fallbackError)
+    return createReadmeSvgResponse(STATIC_ERROR_SVG, 'fallback')
+  }
 }
 
 async function renderStatistics(
@@ -44,22 +55,13 @@ async function renderStatistics(
   return createReadmeSvgResponse(injectFontStyles(body, theme), cacheProfile)
 }
 
-export const GET: RequestHandler = async (event) => {
-  const username = event.url.searchParams.get('username')?.trim()
-
-  if (!username) return new Response('Missing username', { status: 400 })
-
-  const requestedTheme = event.url.searchParams.get('theme') || 'Rosé Pine'
-  const theme = PRESET_THEMES[requestedTheme] || PRESET_THEMES['Rosé Pine']
-
+async function attemptRender(username: string, theme: ThemeTokens): Promise<Response | null> {
   const rateLimit = await checkRateLimit(username.toLowerCase())
 
   if (!rateLimit.success) {
     const cachedStatistics = await getCachedReadmeStats(username)
     if (cachedStatistics) return renderStatistics(cachedStatistics, username, theme, 'stale')
 
-    // A valid image response is important here: GitHub's image proxy can cache a plain-text 429
-    // as a broken image long after this short rate-limit window has ended.
     return renderFallback(username, theme)
   }
 
@@ -74,12 +76,7 @@ export const GET: RequestHandler = async (event) => {
   const result = await client.fetchStats(username)
 
   if (!result.ok) {
-    if (result.error.kind === 'not-found') {
-      return new Response(result.error.message, {
-        status: 404,
-        headers: { 'Cache-Control': 'no-store' },
-      })
-    }
+    if (result.error.kind === 'not-found') return null
 
     const cachedStatistics = await cachedStatisticsPromise
     if (cachedStatistics) return renderStatistics(cachedStatistics, username, theme, 'stale')
@@ -95,4 +92,40 @@ export const GET: RequestHandler = async (event) => {
     renderStatistics(statistics, username, theme, 'success'),
   ])
   return response
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+const RETRY_DELAY_MILLISECONDS = 300
+
+export const GET: RequestHandler = async (event) => {
+  const username = event.url.searchParams.get('username')?.trim()
+
+  if (!username) return new Response('Missing username', { status: 400 })
+
+  const requestedTheme = event.url.searchParams.get('theme') || 'Rosé Pine'
+  const theme = PRESET_THEMES[requestedTheme] || PRESET_THEMES['Rosé Pine']
+
+  try {
+    const response = await attemptRender(username, theme)
+    if (response) return response
+  } catch (firstError) {
+    console.error('[readme] Render failed, retrying once:', firstError)
+    await sleep(RETRY_DELAY_MILLISECONDS)
+
+    try {
+      const response = await attemptRender(username, theme)
+      if (response) return response
+    } catch (secondError) {
+      console.error('[readme] Retry also failed, serving fallback card:', secondError)
+      return renderFallback(username, theme)
+    }
+  }
+
+  return new Response('GitHub user not found', {
+    status: 404,
+    headers: { 'Cache-Control': 'no-store' },
+  })
 }

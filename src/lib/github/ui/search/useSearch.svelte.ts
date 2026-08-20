@@ -1,11 +1,20 @@
 import { createQuery } from '@tanstack/svelte-query'
 import { createGithubClient } from '$lib/github/api/github-client'
 import { GHFETCH_STATS_URL } from '$lib/github/api/config'
+import type { GithubStats } from '$lib/github/models/github-stats'
 
 const client = createGithubClient({
   apiUrl: GHFETCH_STATS_URL,
   requestTimeoutMilliseconds: 8000,
 })
+
+function warmStatsCache(username: string, stats: GithubStats): void {
+  fetch('/api/warm-stats', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, stats }),
+  }).catch(() => {})
+}
 
 export function useSearch() {
   let currentUsername = $state('')
@@ -17,15 +26,22 @@ export function useSearch() {
 
       if (!result.ok) throw new Error(result.error.message)
 
+      warmStatsCache(currentUsername, result.value)
+
       return result.value
     },
     enabled: currentUsername.length > 0,
+    staleTime: 60 * 1000,
   }))
 
   function onSearch(username: string) {
     if (!username) return
 
-    currentUsername = username
+    if (currentUsername === username) {
+      query.refetch()
+    } else {
+      currentUsername = username
+    }
   }
 
   return {

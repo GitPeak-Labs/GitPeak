@@ -38,6 +38,9 @@
           ${tiltStyle(tiltState)}; 
           animation-delay: ${index * 50}ms;
         `}
+        onmouseenter={!isTouchDevice
+          ? (event: MouseEvent) => gridManager.onEnter(event, index)
+          : undefined}
         onmousemove={!isTouchDevice
           ? (event: MouseEvent) => gridManager.onMove(event, index)
           : undefined}
@@ -59,18 +62,18 @@
         <Card.Content
           class="relative z-10 flex flex-col gap-3 p-[14px_16px] sm:gap-4 sm:p-[18px_20px]"
         >
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-1.5">
             <span
               class={cn(
-                'font-mono text-[9px] text-(--subtle)',
-                'tracking-widest uppercase sm:text-[10px]',
+                'truncate font-mono text-[0.5625rem] text-(--subtle)',
+                'tracking-wider uppercase sm:text-[0.625rem] sm:tracking-widest',
               )}
             >
               {item.label}
             </span>
             <span
               class={cn(
-                'flex h-6 w-6 items-center bg-(--accent-bg) text-(--accent)',
+                'flex h-6 w-6 shrink-0 items-center bg-(--accent-bg) text-(--accent)',
                 'justify-center rounded-lg sm:h-7 sm:w-7',
               )}
             >
@@ -100,7 +103,7 @@
     {/each}
   </div>
 
-  <div class="grid grid-cols-3 gap-2 sm:gap-2.5">
+  <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5">
     {#each detailItems(statistics) as item, index (item.label)}
       {@const Icon = item.icon as Component}
       {@const detailIndex = index + 2}
@@ -112,6 +115,7 @@
         class={cn(
           'tilt-card glass relative cursor-default overflow-hidden',
           'rounded-[14px] border-0 bg-transparent shadow-none select-none',
+          'last:col-span-2 sm:last:col-span-1',
         )}
         style={`
           --accent: ${themeColor};
@@ -119,6 +123,9 @@
           ${tiltStyle(tiltState)}; 
           animation-delay: ${detailIndex * 50}ms;
         `}
+        onmouseenter={!isTouchDevice
+          ? (event: MouseEvent) => gridManager.onEnter(event, detailIndex)
+          : undefined}
         onmousemove={!isTouchDevice
           ? (event: MouseEvent) => gridManager.onMove(event, detailIndex)
           : undefined}
@@ -140,11 +147,11 @@
         <Card.Content
           class="relative z-10 flex flex-col gap-1.5 p-[10px_12px] sm:gap-2 sm:p-[12px_14px]"
         >
-          <div class="flex items-center justify-between gap-1">
+          <div class="flex items-center justify-between gap-1.5">
             <span
               class={cn(
-                'truncate font-mono text-[8px] text-(--subtle)',
-                'tracking-widest uppercase sm:text-[9px]',
+                'truncate font-mono text-[0.5625rem] text-(--subtle)',
+                'tracking-wider uppercase sm:tracking-widest',
               )}
             >
               {item.label}

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { fade } from 'svelte/transition'
   import type { OrbitNode } from '../../models/orbit-calculations'
 
   let {
@@ -69,11 +68,10 @@
   {#each orbitNodes as node, index (node.url)}
     {@const isHovered = hoveredIndex === index}
     <g
-      transition:fade={{ duration: 200 }}
       role="button"
       tabindex="0"
       aria-label="View {node.name}"
-      class="cursor-pointer outline-none select-none"
+      class="cursor-pointer transition-opacity duration-200 outline-none select-none"
       onmouseenter={() => (hoveredIndex = index)}
       onmouseleave={() => (hoveredIndex = null)}
       onclick={() => window.open(node.url, '_blank')}

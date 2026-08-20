@@ -97,25 +97,17 @@
 <div class="flex flex-col gap-5">
   <div>
     <div class="mb-2 flex items-center justify-between">
-      <button
-        onclick={() => (presetsOpen = !presetsOpen)}
-        class={cn(
-          'disclosure-btn -mx-1 flex items-center gap-1 rounded px-1 py-0.5',
-          'font-mono text-[9px] tracking-[0.18em] uppercase',
-        )}
+      <span
+        class="font-mono text-[0.5625rem] tracking-[0.18em] uppercase"
         style="color: var(--muted)"
       >
-        <ChevronDown
-          size={10}
-          class={cn('transition-transform duration-150', !presetsOpen && '-rotate-90')}
-        />
         Presets
-      </button>
+      </span>
       <button
         onclick={reset}
         class={cn(
-          'disclosure-btn -mx-1 flex items-center gap-1 rounded px-1 py-0.5',
-          'font-mono text-[9px] tracking-[0.1em] uppercase transition-colors',
+          'disclosure-btn -mx-1 flex items-center gap-1 rounded px-1.5 py-0.5',
+          'font-mono text-[0.5625rem] tracking-[0.1em] uppercase transition-colors',
         )}
         style="color: var(--muted)"
       >
@@ -123,70 +115,68 @@
         reset
       </button>
     </div>
-    {#if presetsOpen}
-      <div class="flex flex-wrap gap-1.5">
-        {#each Object.keys(PRESET_THEMES) as name (name)}
-          <button
-            onclick={() => applyPreset(name)}
-            class={cn(
-              'rounded-lg border px-2.5 py-1 font-mono text-[10px]',
-              'transition-all duration-150',
-            )}
-            style="
-            border-color: {activePreset === name
-              ? 'color-mix(in srgb, var(--iris) 60%, transparent)'
-              : 'color-mix(in srgb, var(--highlight-med) 50%, transparent)'};
-            color: {activePreset === name ? 'var(--iris)' : 'var(--subtle)'};
-            background: {activePreset === name
-              ? 'color-mix(in srgb, var(--iris) 10%, transparent)'
-              : 'transparent'};
-          "
-          >
-            {name}
-          </button>
-        {/each}
-
-        <label
-          class={cn(
-            'flex cursor-pointer items-center gap-1 rounded-lg',
-            'px-2.5 py-1 font-mono text-[10px] transition-all',
-            'duration-150',
-          )}
-          style="
-          border: 1px dashed color-mix(in srgb,
-            var(--highlight-med) 50%, transparent);
-          color: var(--muted);
-        "
-        >
-          + import CSS
-          <input type="file" accept=".css" class="hidden" onchange={importCSS} />
-        </label>
-
+    <div class="flex flex-wrap gap-1.5">
+      {#each Object.keys(PRESET_THEMES) as name (name)}
         <button
-          onclick={exportCSS}
+          onclick={() => applyPreset(name)}
           class={cn(
-            'flex cursor-pointer items-center gap-1 rounded-lg',
-            'px-2.5 py-1 font-mono text-[10px] transition-all',
-            'duration-150',
+            'touch-manipulation rounded-lg border px-2.5 py-1 font-mono text-[0.625rem]',
+            'transition-all duration-150',
           )}
           style="
-          border: 1px dashed color-mix(in srgb,
-            var(--highlight-med) 50%, transparent);
-          color: var(--muted);
+          border-color: {activePreset === name
+            ? 'color-mix(in srgb, var(--iris) 60%, transparent)'
+            : 'color-mix(in srgb, var(--highlight-med) 50%, transparent)'};
+          color: {activePreset === name ? 'var(--iris)' : 'var(--subtle)'};
+          background: {activePreset === name
+            ? 'color-mix(in srgb, var(--iris) 10%, transparent)'
+            : 'transparent'};
         "
         >
-          ↓ export CSS
+          {name}
         </button>
-      </div>
-    {/if}
+      {/each}
+
+      <label
+        class={cn(
+          'flex cursor-pointer items-center gap-1 rounded-lg',
+          'px-2.5 py-1 font-mono text-[0.625rem] transition-all',
+          'duration-150',
+        )}
+        style="
+        border: 1px dashed color-mix(in srgb,
+          var(--highlight-med) 50%, transparent);
+        color: var(--muted);
+      "
+      >
+        + import CSS
+        <input type="file" accept=".css" class="hidden" onchange={importCSS} />
+      </label>
+
+      <button
+        onclick={exportCSS}
+        class={cn(
+          'flex cursor-pointer items-center gap-1 rounded-lg',
+          'px-2.5 py-1 font-mono text-[0.625rem] transition-all',
+          'duration-150',
+        )}
+        style="
+        border: 1px dashed color-mix(in srgb,
+          var(--highlight-med) 50%, transparent);
+        color: var(--muted);
+      "
+      >
+        ↓ export CSS
+      </button>
+    </div>
   </div>
 
   <div>
     <button
       onclick={() => (colorsOpen = !colorsOpen)}
       class={cn(
-        'disclosure-btn -mx-1 mb-2 flex items-center gap-1 rounded px-1 py-0.5',
-        'font-mono text-[9px] tracking-[0.18em] uppercase',
+        'disclosure-btn -mx-1 mb-2 flex items-center gap-1.5 rounded px-1.5 py-1',
+        'font-mono text-[0.5625rem] tracking-[0.18em] uppercase',
       )}
       style="color: var(--muted)"
     >
@@ -194,14 +184,14 @@
         size={10}
         class={cn('transition-transform duration-150', !colorsOpen && '-rotate-90')}
       />
-      Colors
+      Custom Colors
     </button>
     {#if colorsOpen}
       <div class="grid grid-cols-1 gap-1">
         {#each tokenKeys as key (key)}
           <div class="flex flex-col">
             <div class="flex items-center justify-between gap-3 py-1">
-              <span class="font-mono text-[10px]" style="color: var(--subtle)">
+              <span class="font-mono text-[0.625rem]" style="color: var(--subtle)">
                 {TOKEN_LABELS[key]}
               </span>
               <div class="flex shrink-0 items-center gap-2">
@@ -215,7 +205,7 @@
                   }}
                   class={cn(
                     'w-20 rounded-lg px-2 py-1 text-right font-mono',
-                    'text-[10px] transition-all outline-none',
+                    'text-[0.625rem] transition-all outline-none',
                   )}
                   style="
                   background: color-mix(in srgb, var(--overlay) 80%, transparent);
@@ -229,7 +219,7 @@
                 <button
                   aria-label="Pick color for {TOKEN_LABELS[key]}"
                   onclick={() => (activeKey = activeKey === key ? null : key)}
-                  class="h-7 w-7 shrink-0 rounded-lg transition-all"
+                  class="h-7 w-7 shrink-0 touch-manipulation rounded-lg transition-all"
                   style="
                   background: {tokens[key]};
                   border: 1px solid color-mix(in srgb,
@@ -267,6 +257,7 @@
   .disclosure-btn {
     outline: none;
     transition: color 0.15s ease;
+    touch-action: manipulation;
   }
 
   .disclosure-btn:hover {

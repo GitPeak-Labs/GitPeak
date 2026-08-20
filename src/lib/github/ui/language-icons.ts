@@ -44,13 +44,13 @@ const SIMPLE_ICONS: Readonly<Record<string, string>> = {
 } as const
 
 const DIRECT_ICONS: Readonly<Record<string, string>> = {
-  Java: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
+  java: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
 } as const
 
 export function langIconUrl(name: string): string {
-  if (DIRECT_ICONS[name]) return DIRECT_ICONS[name]
+  const normalizedName = name.trim().toLowerCase()
+  if (DIRECT_ICONS[normalizedName]) return DIRECT_ICONS[normalizedName]
 
-  const normalizedName = name.toLowerCase()
   const slug = SIMPLE_ICONS[normalizedName]
 
   return slug ? `https://cdn.simpleicons.org/${slug}` : ''

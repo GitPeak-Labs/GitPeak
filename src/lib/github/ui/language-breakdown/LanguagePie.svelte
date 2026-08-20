@@ -188,7 +188,9 @@
 <Card class="glass overflow-hidden rounded-2xl">
   <CardHeader class="p-4 pb-0 sm:p-5">
     <div class="flex items-center justify-between gap-2">
-      <span class="text-subtle font-mono text-[10px] tracking-widest uppercase">
+      <span
+        class="text-subtle hidden font-mono text-[0.625rem] tracking-widest uppercase sm:inline"
+      >
         {viewMode === 'languages'
           ? 'Languages'
           : viewMode === 'orbit'
@@ -196,18 +198,25 @@
             : 'Collaborators'}
       </span>
 
-      <Tabs value={viewMode} onValueChange={(value) => (viewMode = value as typeof viewMode)}>
-        <TabsList class="h-7 rounded-lg bg-black/10 p-0.5">
-          <TabsTrigger value="languages" class="h-6 px-2.5 font-mono text-[9px]">
+      <Tabs
+        value={viewMode}
+        onValueChange={(value) => (viewMode = value as typeof viewMode)}
+        class="min-w-0"
+      >
+        <TabsList class="h-7 min-w-0 rounded-lg bg-black/10 p-0.5">
+          <TabsTrigger value="languages" class="h-6 px-1.5 font-mono text-[0.5625rem] sm:px-2.5">
             <Palette size={10} class="mr-1" />
             Lang
           </TabsTrigger>
-          <TabsTrigger value="orbit" class="h-6 px-2.5 font-mono text-[9px]">
+          <TabsTrigger value="orbit" class="h-6 px-1.5 font-mono text-[0.5625rem] sm:px-2.5">
             <Orbit size={10} class="mr-1" />
             Orbit
           </TabsTrigger>
           {#if hasCollaborators}
-            <TabsTrigger value="collaborators" class="h-6 px-2.5 font-mono text-[9px]">
+            <TabsTrigger
+              value="collaborators"
+              class="h-6 px-1.5 font-mono text-[0.5625rem] sm:px-2.5"
+            >
               <Handshake size={10} class="mr-1" />
               Collab
             </TabsTrigger>
@@ -316,14 +325,22 @@
         {#if viewMode === 'orbit'}
           <div
             transition:scale={{ duration: 250, start: 0.9 }}
-            class="bg-base/80 border-subtle/10 absolute -bottom-16 left-1/2 hidden -translate-x-1/2 items-center gap-0.5 rounded-full border p-1 shadow-lg backdrop-blur-md sm:flex"
+            class={cn(
+              'bg-base/80 border-subtle/10 absolute -bottom-16 left-1/2 hidden',
+              '-translate-x-1/2 items-center gap-0.5 rounded-full border p-1',
+              'shadow-lg backdrop-blur-md sm:flex',
+            )}
           >
             {@render ownershipToggle()}
           </div>
         {:else if viewMode === 'collaborators'}
           <div
             transition:scale={{ duration: 250, start: 0.9 }}
-            class="bg-base/80 border-subtle/10 absolute -bottom-16 left-1/2 hidden -translate-x-1/2 items-center gap-0.5 rounded-full border p-1 shadow-lg backdrop-blur-md sm:flex"
+            class={cn(
+              'bg-base/80 border-subtle/10 absolute -bottom-16 left-1/2 hidden',
+              '-translate-x-1/2 items-center gap-0.5 rounded-full border p-1',
+              'shadow-lg backdrop-blur-md sm:flex',
+            )}
           >
             {@render collaboratorSortToggle()}
           </div>
@@ -333,7 +350,10 @@
       {#if viewMode === 'orbit'}
         <div class="flex sm:hidden" transition:fade={{ duration: 200 }}>
           <div
-            class="bg-base/80 border-subtle/10 flex items-center gap-0.5 rounded-full border p-1 shadow-lg backdrop-blur-md"
+            class={cn(
+              'bg-base/80 border-subtle/10 flex items-center gap-0.5',
+              'rounded-full border p-1 shadow-lg backdrop-blur-md',
+            )}
           >
             {@render ownershipToggle()}
           </div>
@@ -341,7 +361,10 @@
       {:else if viewMode === 'collaborators'}
         <div class="flex sm:hidden" transition:fade={{ duration: 200 }}>
           <div
-            class="bg-base/80 border-subtle/10 flex items-center gap-0.5 rounded-full border p-1 shadow-lg backdrop-blur-md"
+            class={cn(
+              'bg-base/80 border-subtle/10 flex items-center gap-0.5',
+              'rounded-full border p-1 shadow-lg backdrop-blur-md',
+            )}
           >
             {@render collaboratorSortToggle()}
           </div>

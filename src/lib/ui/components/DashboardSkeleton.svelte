@@ -3,7 +3,8 @@
 </script>
 
 <div
-  class="fade-in-up mx-auto grid w-full max-w-[1100px] touch-pan-y grid-cols-1 items-start gap-3 sm:gap-4 md:grid-cols-[1.05fr_1fr]"
+  class={'fade-in-up mx-auto grid w-full max-w-[1100px] touch-pan-y grid-cols-1 ' +
+    'items-start gap-3 sm:gap-4 md:grid-cols-[1.05fr_1fr]'}
 >
   <div class="flex touch-pan-y flex-col gap-3 sm:gap-3.5">
     <div class="glass flex items-start gap-3 overflow-hidden rounded-2xl p-4 sm:gap-5 sm:p-6">

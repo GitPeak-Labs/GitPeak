@@ -1,6 +1,7 @@
 <script lang="ts">
   import ThemeControls from '$lib/theme/ThemeControls.svelte'
-  import { Palette, ChevronDown } from 'lucide-svelte'
+  import { Palette, ChevronDown, X } from 'lucide-svelte'
+  import { Button } from '$lib/components/ui/button'
   import { cn } from '$lib/ui/styling/class-merger'
 
   let open = $state(false)
@@ -39,6 +40,15 @@
 
 {#if open}
   <div
+    role="button"
+    tabindex="-1"
+    aria-label="Close theme customizer"
+    onclick={() => (open = false)}
+    onkeydown={(e) => e.key === 'Enter' && (open = false)}
+    class="fixed inset-0 z-40 bg-black/60 sm:hidden"
+  ></div>
+
+  <div
     bind:this={panelElement}
     class={cn(
       'fixed top-16 right-2 left-2 z-50 flex max-h-[80vh]',
@@ -56,9 +66,21 @@
       style="border-bottom: 1px solid color-mix(in srgb,
         var(--highlight-med) 30%, transparent)"
     >
-      <span class="font-mono text-[10px] tracking-[0.18em] uppercase" style="color: var(--subtle)">
+      <span
+        class="font-mono text-[0.625rem] tracking-[0.18em] uppercase"
+        style="color: var(--subtle)"
+      >
         Customize
       </span>
+      <Button
+        variant="ghost"
+        size="icon"
+        class="-mr-1.5 h-6 w-6 sm:hidden"
+        onclick={() => (open = false)}
+        aria-label="Close"
+      >
+        <X size={13} />
+      </Button>
     </div>
 
     <div class="flex flex-1 flex-col overflow-y-auto p-4">

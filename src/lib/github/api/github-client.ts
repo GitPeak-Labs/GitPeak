@@ -19,6 +19,24 @@ const INTERNAL_SERVER_ERROR = 500
 
 const RETRY_DELAY_MILLISECONDS = 250
 
+const STATS_CACHE_TTL_MILLISECONDS = 30_000
+const statsCache = new Map<
+  string,
+  { result: Result<GithubStats, GithubClientError>; expiresAt: number }
+>()
+
+function getCachedStats(cacheKey: string): Result<GithubStats, GithubClientError> | undefined {
+  const entry = statsCache.get(cacheKey)
+  if (!entry) return undefined
+
+  if (entry.expiresAt <= Date.now()) {
+    statsCache.delete(cacheKey)
+    return undefined
+  }
+
+  return entry.result
+}
+
 function getErrorMessage(status: number): string {
   const messages: Record<number, string> = {
     [NOT_FOUND]: 'GitHub user not found',
@@ -109,12 +127,26 @@ export function createGithubClient(config: GithubClientConfig) {
   return {
     async fetchStats(username: string): Promise<Result<GithubStats, GithubClientError>> {
       const sanitizedUsername = username.trim().toLowerCase()
+      const cacheKey = `${config.apiUrl}:${sanitizedUsername}`
+
+      const cached = getCachedStats(cacheKey)
+      if (cached) return cached
 
       const firstAttempt = await attemptFetchStats(config, sanitizedUsername)
-      if (!isRetryable(firstAttempt)) return firstAttempt
+      let result = firstAttempt
+      if (isRetryable(firstAttempt)) {
+        await sleep(RETRY_DELAY_MILLISECONDS)
+        result = await attemptFetchStats(config, sanitizedUsername)
+      }
 
-      await sleep(RETRY_DELAY_MILLISECONDS)
-      return attemptFetchStats(config, sanitizedUsername)
+      if (result.ok) {
+        statsCache.set(cacheKey, {
+          result,
+          expiresAt: Date.now() + STATS_CACHE_TTL_MILLISECONDS,
+        })
+      }
+
+      return result
     },
   }
 }

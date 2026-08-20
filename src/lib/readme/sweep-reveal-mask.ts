@@ -28,7 +28,10 @@ function sectorPath(
     const left = round(centerX - radius)
     const right = round(centerX + radius)
     const cy = round(centerY)
-    return `M ${left} ${cy} A ${radius} ${radius} 0 1 1 ${right} ${cy} A ${radius} ${radius} 0 1 1 ${left} ${cy} Z`
+    return (
+      `M ${left} ${cy} A ${radius} ${radius} 0 1 1 ${right} ${cy} ` +
+      `A ${radius} ${radius} 0 1 1 ${left} ${cy} Z`
+    )
   }
 
   const largeArcFlag = spanDegrees > 180 ? 1 : 0

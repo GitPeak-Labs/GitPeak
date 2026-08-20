@@ -3,7 +3,6 @@
   import { formatNumber } from '$lib/core/formatting/number-formatting'
   import { Star, ArrowUpRight } from 'lucide-svelte'
   import { Badge } from '$lib/components/ui/badge'
-  import { Button } from '$lib/components/ui/button'
   import { Card, CardContent } from '$lib/components/ui/card'
   import { cn } from '$lib/ui/styling/class-merger'
 
@@ -26,7 +25,7 @@
       <CardContent class="p-5">
         <div class="flex items-start justify-between gap-4">
           <div class="flex min-w-0 flex-1 flex-col gap-2">
-            <span class="font-mono text-[9px] tracking-[0.2em] text-(--muted) uppercase">
+            <span class="font-mono text-[0.5625rem] tracking-[0.2em] text-(--muted) uppercase">
               ★ most starred repository
             </span>
             <span class="truncate font-serif text-lg leading-tight font-semibold text-(--text)">
@@ -45,20 +44,20 @@
                 <Star size={12} class="fill-(--gold)" />
                 {formatNumber(repository?.stars ?? 0)}
               </Badge>
-              <span class="font-mono text-[10px] text-(--muted)">stars</span>
+              <span class="font-mono text-[0.625rem] text-(--muted)">stars</span>
             </div>
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
+          <div
             class={cn(
               'bg-[color-mix(in_srgb,var(--highlight-med)_60%,transparent)]',
-              'mt-1 h-8 w-8 shrink-0 rounded-xl text-(--muted)',
+              'mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-(--muted)',
+              'transition-colors duration-150',
             )}
+            aria-hidden="true"
           >
             <ArrowUpRight size={15} />
-          </Button>
+          </div>
         </div>
       </CardContent>
     </a>

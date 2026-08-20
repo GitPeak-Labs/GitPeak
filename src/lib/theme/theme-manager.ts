@@ -134,7 +134,7 @@ export const PRESET_THEMES: Record<string, ThemeTokens> = {
     foam: '#88c0d0',
     iris: '#81a1c1',
     'highlight-low': '#2e3440',
-    'highlight-med': '#434c5e;',
+    'highlight-med': '#434c5e',
     'highlight-high': '#4c566a',
   },
 }
@@ -232,6 +232,12 @@ export function getSavedPresetName(): string | null {
   if (typeof window === 'undefined') return null
   const name = localStorage.getItem(STORAGE_KEY)
   return name === 'custom' ? null : name
+}
+
+export function previewPreset(themeName: string): void {
+  if (typeof window === 'undefined') return
+  document.documentElement.setAttribute('data-theme', themeName)
+  document.documentElement.removeAttribute('style')
 }
 
 export function applyPreset(themeName: string): void {
