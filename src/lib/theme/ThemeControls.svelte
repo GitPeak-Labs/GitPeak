@@ -191,7 +191,7 @@
         {#each tokenKeys as key (key)}
           <div class="flex flex-col">
             <div class="flex items-center justify-between gap-3 py-1">
-              <span class="font-mono text-[0.625rem]" style="color: var(--subtle)">
+              <span class="truncate font-mono text-[0.625rem]" style="color: var(--subtle)">
                 {TOKEN_LABELS[key]}
               </span>
               <div class="flex shrink-0 items-center gap-2">
@@ -204,14 +204,15 @@
                     if (/^#[0-9a-fA-F]{6}$/.test(value)) update(key, value)
                   }}
                   class={cn(
-                    'w-20 rounded-lg px-2 py-1 text-right font-mono',
-                    'text-[0.625rem] transition-all outline-none',
+                    'w-[84px] rounded-lg px-2 py-1 text-center font-mono',
+                    'transition-all outline-none',
                   )}
                   style="
                   background: color-mix(in srgb, var(--overlay) 80%, transparent);
                   border: 1px solid color-mix(in srgb,
                     var(--highlight-med) 50%, transparent);
                   color: var(--subtle);
+                  font-size: 0.6875rem !important;
                 "
                   spellcheck="false"
                   maxlength="7"
