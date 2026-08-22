@@ -126,7 +126,7 @@
           style="
           border-color: {activePreset === name
             ? 'color-mix(in srgb, var(--iris) 60%, transparent)'
-            : 'color-mix(in srgb, var(--highlight-med) 50%, transparent)'};
+            : 'var(--border-glass)'};
           color: {activePreset === name ? 'var(--iris)' : 'var(--subtle)'};
           background: {activePreset === name
             ? 'color-mix(in srgb, var(--iris) 10%, transparent)'
@@ -144,8 +144,7 @@
           'duration-150',
         )}
         style="
-        border: 1px dashed color-mix(in srgb,
-          var(--highlight-med) 50%, transparent);
+        border: 1px dashed var(--border-glass);
         color: var(--muted);
       "
       >
@@ -161,8 +160,7 @@
           'duration-150',
         )}
         style="
-        border: 1px dashed color-mix(in srgb,
-          var(--highlight-med) 50%, transparent);
+        border: 1px dashed var(--border-glass);
         color: var(--muted);
       "
       >
@@ -209,8 +207,7 @@
                   )}
                   style="
                   background: color-mix(in srgb, var(--overlay) 80%, transparent);
-                  border: 1px solid color-mix(in srgb,
-                    var(--highlight-med) 50%, transparent);
+                  border: 1px solid var(--border-glass);
                   color: var(--subtle);
                   font-size: 0.6875rem !important;
                 "

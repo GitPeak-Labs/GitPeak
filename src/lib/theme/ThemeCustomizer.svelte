@@ -29,7 +29,7 @@
   )}
   style="
     color: var(--subtle);
-    border-color: color-mix(in srgb, var(--highlight-med) 50%, transparent);
+    border-color: var(--border-glass);
   "
   aria-label="Customize theme"
 >

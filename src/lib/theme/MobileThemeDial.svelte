@@ -105,7 +105,7 @@
     width: {FAB_SIZE_PIXELS}px;
     height: {FAB_SIZE_PIXELS}px;
     color: var(--iris);
-    border-color: color-mix(in srgb, var(--highlight-med) 50%, transparent);
+    border-color: var(--border-glass);
     background: color-mix(in srgb, var(--overlay) 92%, transparent);
     opacity: {open ? 0 : 1};
     transform: scale({open ? 0.85 : 1});
@@ -132,7 +132,7 @@
         height: {RING_RADIUS_PIXELS * 2}px;
         left: 0;
         top: 0;
-        border: 1px solid color-mix(in srgb, var(--highlight-med) 35%, transparent);
+        border: 1px solid var(--border-glass-faint);
         box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--base) 40%, transparent);
       "
     ></div>
@@ -193,7 +193,7 @@
         width: 88px;
         height: 88px;
         background: color-mix(in srgb, var(--overlay) 92%, transparent);
-        border: 1px solid color-mix(in srgb, var(--highlight-med) 50%, transparent);
+        border: 1px solid var(--border-glass);
         box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.5);
       "
     >

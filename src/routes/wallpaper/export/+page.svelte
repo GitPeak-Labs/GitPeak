@@ -209,7 +209,7 @@
     gap: 12px;
     padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;
     background: color-mix(in srgb, var(--base) 92%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--highlight-med) 35%, transparent);
+    border-bottom: 1px solid var(--border-glass-faint);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
@@ -342,7 +342,7 @@
   .controls-column {
     flex-shrink: 0;
     padding: 20px 20px calc(env(safe-area-inset-bottom, 0px) + 120px);
-    border-top: 1px solid color-mix(in srgb, var(--highlight-med) 35%, transparent);
+    border-top: 1px solid var(--border-glass-faint);
     background: color-mix(in srgb, var(--base) 40%, transparent);
   }
 
@@ -352,7 +352,7 @@
       padding: 24px 24px 80px;
       overflow-y: auto;
       border-top: none;
-      border-left: 1px solid color-mix(in srgb, var(--highlight-med) 35%, transparent);
+      border-left: 1px solid var(--border-glass-faint);
     }
   }
 
@@ -388,7 +388,7 @@
     font-size: 12px;
     font-weight: 500;
     transition: all 0.13s ease;
-    border: 1px solid color-mix(in srgb, var(--highlight-med) 50%, transparent);
+    border: 1px solid var(--border-glass);
     background: transparent;
     color: var(--subtle);
     touch-action: manipulation;
@@ -422,7 +422,7 @@
     gap: 12px;
     padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 12px);
     background: color-mix(in srgb, var(--base) 92%, transparent);
-    border-top: 1px solid color-mix(in srgb, var(--highlight-med) 35%, transparent);
+    border-top: 1px solid var(--border-glass-faint);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
