@@ -63,34 +63,28 @@
   <rect width={WIDTH} height={HEIGHT} rx="24" fill="url(#aurora-foam)" />
   <rect width={WIDTH} height={HEIGHT} rx="24" fill="url(#aurora-love)" />
 
-  <g class="stagger delay-1">
-    <ReadmeProfileSection
-      {statistics}
-      {username}
-      {theme}
-      {avatarDataUri}
-      x={LEFT_X}
-      y={40}
-      width={LEFT_WIDTH}
-    />
-  </g>
+  <ReadmeProfileSection
+    {statistics}
+    {username}
+    {theme}
+    {avatarDataUri}
+    x={LEFT_X}
+    y={40}
+    width={LEFT_WIDTH}
+  />
 
-  <g class="stagger delay-2">
-    <ReadmeStatGrid {statistics} {theme} x={LEFT_X} y={160} width={LEFT_WIDTH} height={326} />
-  </g>
+  <ReadmeStatGrid {statistics} {theme} x={LEFT_X} y={160} width={LEFT_WIDTH} height={326} />
 
-  <g class="stagger delay-4">
-    <ReadmeLanguagePanel
-      languages={statistics.languages}
-      mostStarredRepo={statistics.mostStarredRepo}
-      {theme}
-      {avatarDataUri}
-      x={RIGHT_X}
-      y={40}
-      width={RIGHT_WIDTH}
-      height={446}
-    />
-  </g>
+  <ReadmeLanguagePanel
+    languages={statistics.languages}
+    mostStarredRepo={statistics.mostStarredRepo}
+    {theme}
+    {avatarDataUri}
+    x={RIGHT_X}
+    y={40}
+    width={RIGHT_WIDTH}
+    height={446}
+  />
 
   <text
     x={WIDTH - 24}

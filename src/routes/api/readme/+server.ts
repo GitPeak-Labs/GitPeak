@@ -13,8 +13,12 @@ import { checkRateLimit } from '$lib/server/rate-limit'
 import { PRESET_THEMES, type ThemeTokens } from '$lib/theme/theme-manager'
 import type { RequestHandler } from './$types'
 
-const STATS_TIMEOUT_MILLISECONDS = 6500
-const AVATAR_TIMEOUT_MILLISECONDS = 2000
+const STATS_TIMEOUT_MILLISECONDS = 5000
+const AVATAR_TIMEOUT_MILLISECONDS = 1500
+
+function cleanSvg(svg: string): string {
+  return svg.replace(/<!--[\s\S]*?-->/g, '').trim()
+}
 
 function injectFontStyles(svg: string, theme: ThemeTokens): string {
   const fontStyles = buildReadmeFontStyles(
@@ -22,7 +26,8 @@ function injectFontStyles(svg: string, theme: ThemeTokens): string {
     README_FONT_DATA_URIS.serif,
     theme,
   )
-  return svg.replace('<defs>', `<defs><style>${fontStyles}</style>`)
+  const styled = svg.replace('<defs>', `<defs><style>${fontStyles}</style>`)
+  return cleanSvg(styled)
 }
 
 const STATIC_ERROR_SVG =
@@ -31,14 +36,31 @@ const STATIC_ERROR_SVG =
   '<text x="24" y="66" font-family="monospace" font-size="14" fill="#e0def4">' +
   'GitPeak stats are temporarily unavailable</text></svg>'
 
-function renderFallback(username: string, theme: ThemeTokens): Response {
+function renderFallback(username: string, theme: ThemeTokens, message?: string): Response {
   try {
-    const { body } = render(ReadmeFallbackCard, { props: { username, theme } })
+    const { body } = render(ReadmeFallbackCard, { props: { username, theme, message } })
     return createReadmeSvgResponse(injectFontStyles(body, theme), 'fallback')
   } catch (fallbackError) {
     console.error('[readme] Fallback card also failed to render:', fallbackError)
-    return createReadmeSvgResponse(STATIC_ERROR_SVG, 'fallback')
+    return createReadmeSvgResponse(cleanSvg(STATIC_ERROR_SVG), 'fallback')
   }
+}
+
+function resolveTheme(requestedTheme: string | null): ThemeTokens {
+  if (!requestedTheme) return PRESET_THEMES['Rosé Pine']
+  if (PRESET_THEMES[requestedTheme]) return PRESET_THEMES[requestedTheme]
+
+  const normalized = requestedTheme.toLowerCase().replace(/[-_+]/g, ' ').trim()
+  for (const [name, tokens] of Object.entries(PRESET_THEMES)) {
+    const normalizedPreset = name
+      .toLowerCase()
+      .replace(/[-_+é]/g, (c) => (c === 'é' ? 'e' : ' '))
+      .trim()
+    if (normalizedPreset === normalized.replace(/é/g, 'e')) {
+      return tokens
+    }
+  }
+  return PRESET_THEMES['Rosé Pine']
 }
 
 async function renderStatistics(
@@ -76,7 +98,9 @@ async function attemptRender(username: string, theme: ThemeTokens): Promise<Resp
   const result = await client.fetchStats(username)
 
   if (!result.ok) {
-    if (result.error.kind === 'not-found') return null
+    if (result.error.kind === 'not-found') {
+      return renderFallback(username, theme, `User @${username} not found`)
+    }
 
     const cachedStatistics = await cachedStatisticsPromise
     if (cachedStatistics) return renderStatistics(cachedStatistics, username, theme, 'stale')
@@ -103,10 +127,11 @@ const RETRY_DELAY_MILLISECONDS = 300
 export const GET: RequestHandler = async (event) => {
   const username = event.url.searchParams.get('username')?.trim()
 
-  if (!username) return new Response('Missing username', { status: 400 })
+  if (!username) {
+    return renderFallback('unknown', PRESET_THEMES['Rosé Pine'], 'Please provide a username')
+  }
 
-  const requestedTheme = event.url.searchParams.get('theme') || 'Rosé Pine'
-  const theme = PRESET_THEMES[requestedTheme] || PRESET_THEMES['Rosé Pine']
+  const theme = resolveTheme(event.url.searchParams.get('theme'))
 
   try {
     const response = await attemptRender(username, theme)
@@ -124,8 +149,5 @@ export const GET: RequestHandler = async (event) => {
     }
   }
 
-  return new Response('GitHub user not found', {
-    status: 404,
-    headers: { 'Cache-Control': 'no-store' },
-  })
+  return renderFallback(username, theme, `User @${username} not found`)
 }

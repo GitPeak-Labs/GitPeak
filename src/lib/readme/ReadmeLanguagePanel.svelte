@@ -6,7 +6,6 @@
     getDimensions,
     generateArcPath,
   } from '$lib/github/ui/language-breakdown/useLanguagePie.svelte'
-  import { buildSweepRevealMask } from './sweep-reveal-mask'
   import { monoNameBudget, wrapName } from '$lib/core/text/legend-fit'
   import ReadmeTopRepo from './ReadmeTopRepo.svelte'
 
@@ -82,25 +81,6 @@
     })
   })
 
-  const SWEEP_BEGIN_SECONDS = 0.4
-
-  const sweepMaskRadius = dimensions.outerRadiusPixels + 4
-  const sweepMask = $derived(buildSweepRevealMask(centerX, centerY, sweepMaskRadius))
-  const sweepMaskBox = $derived({
-    x: centerX - sweepMaskRadius,
-    y: centerY - sweepMaskRadius,
-    size: sweepMaskRadius * 2,
-  })
-
-  // Mirrors the cubic ease-out sweep's own timing, so each slice's little pop/settle
-  // lands right as the mask sweep reveals it — combining the true arc-growth
-  // construction with the earlier per-slice "pop in" flourish.
-  function sweepDelaySeconds(startAngleDegrees: number): number {
-    const easedProgress = Math.min(Math.max((startAngleDegrees + 90) / 360, 0), 1)
-    const linearProgress = 1 - Math.cbrt(1 - easedProgress)
-    return SWEEP_BEGIN_SECONDS + linearProgress * sweepMask.durSeconds
-  }
-
   // A long repo name wraps onto a second line rather than colliding with anything, so the
   // block's height (and the divider above it) follows the wrapped line count.
   const repoNameLines = $derived(
@@ -162,35 +142,7 @@
 />
 
 {#if slices.length > 0}
-  <mask
-    id="lang-sweep-mask"
-    maskUnits="userSpaceOnUse"
-    x={sweepMaskBox.x}
-    y={sweepMaskBox.y}
-    width={sweepMaskBox.size}
-    height={sweepMaskBox.size}
-  >
-    <rect
-      x={sweepMaskBox.x}
-      y={sweepMaskBox.y}
-      width={sweepMaskBox.size}
-      height={sweepMaskBox.size}
-      fill="black"
-    />
-    <path d={sweepMask.baseD} fill="white">
-      <animate
-        attributeName="d"
-        values={sweepMask.values}
-        keyTimes={sweepMask.keyTimes}
-        dur="{sweepMask.durSeconds}s"
-        begin="{SWEEP_BEGIN_SECONDS}s"
-        fill="freeze"
-        calcMode="discrete"
-      />
-    </path>
-  </mask>
-
-  <g mask="url(#lang-sweep-mask)">
+  <g>
     {#each slices as slice (slice.name)}
       {@const pathD = generateArcPath(
         centerX,
@@ -200,14 +152,7 @@
         slice.startAngleDegrees,
         slice.endAngleDegrees,
       )}
-      <path
-        d={pathD}
-        fill={slice.color}
-        class="anim-slice"
-        style="transform-origin:{centerX}px {centerY}px; animation-delay:{sweepDelaySeconds(
-          slice.startAngleDegrees,
-        )}s"
-      />
+      <path d={pathD} fill={slice.color} />
     {/each}
   </g>
 {/if}
@@ -235,10 +180,10 @@
   stroke-width="3"
 />
 
-{#each legendEntries as slice, index (slice.name)}
+{#each legendEntries as slice (slice.name)}
   {@const rowY = donutY + slice.offsetY + 10}
 
-  <g class="anim-row" style="animation-delay:{0.5 + index * 0.06}s">
+  <g>
     <circle cx={legendX} cy={rowY - 4} r="4" fill={slice.color} />
     {#each slice.lines as line, lineIndex (lineIndex)}
       <text
@@ -273,7 +218,7 @@
     stroke={theme.subtle}
     stroke-opacity="0.15"
   />
-  <g class="anim-row" style="animation-delay:0.9s">
+  <g>
     <ReadmeTopRepo
       repository={mostStarredRepo}
       nameLines={repoNameLines}

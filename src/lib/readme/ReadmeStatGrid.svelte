@@ -43,7 +43,7 @@
   {@const cardX = x + index * (heroWidth + HERO_GAP)}
   {@const accent = theme[item.accentVar]}
 
-  <g class="anim-card" style="animation-delay:{0.1 + index * 0.08}s">
+  <g>
     <rect
       x={cardX}
       {y}
@@ -60,16 +60,7 @@
     <text x={cardX + 20} y={y + 80} class="text-serif" font-size="38">
       {formatNumber(item.value)}
     </text>
-    <rect
-      x={cardX + 20}
-      y={y + 92}
-      width="48"
-      height="3"
-      rx="1.5"
-      fill={accent}
-      class="bar-fill"
-      style="transform-origin:{cardX + 20}px {y + 92}px; animation-delay:{0.25 + index * 0.08}s"
-    />
+    <rect x={cardX + 20} y={y + 92} width="48" height="3" rx="1.5" fill={accent} />
   </g>
 {/each}
 
@@ -80,7 +71,7 @@
   {@const cardY = detailTop + row * (detailHeight + DETAIL_ROW_GAP)}
   {@const accent = theme[item.accentVar]}
 
-  <g class="anim-card" style="animation-delay:{0.3 + index * 0.06}s">
+  <g>
     <rect
       x={cardX}
       y={cardY}
@@ -97,15 +88,6 @@
     <text x={cardX + 16} y={cardY + 66} class="text-serif" font-size="26">
       {formatNumber(item.value)}
     </text>
-    <rect
-      x={cardX + 16}
-      y={cardY + 76}
-      width="36"
-      height="2"
-      rx="1"
-      fill={accent}
-      class="bar-fill"
-      style="transform-origin:{cardX + 16}px {cardY + 76}px; animation-delay:{0.45 + index * 0.06}s"
-    />
+    <rect x={cardX + 16} y={cardY + 76} width="36" height="2" rx="1" fill={accent} />
   </g>
 {/each}
