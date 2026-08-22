@@ -99,7 +99,7 @@
   aria-label="Cycle theme, rotate the dial to pick a preset"
   class={cn(
     'glass flex touch-none items-center justify-center rounded-full',
-    'border shadow-lg transition-transform select-none active:scale-95',
+    'border shadow-lg select-none',
   )}
   style="
     width: {FAB_SIZE_PIXELS}px;
@@ -107,6 +107,9 @@
     color: var(--iris);
     border-color: color-mix(in srgb, var(--highlight-med) 50%, transparent);
     background: color-mix(in srgb, var(--overlay) 92%, transparent);
+    opacity: {open ? 0 : 1};
+    transform: scale({open ? 0.85 : 1});
+    transition: opacity 160ms ease, transform 160ms ease;
   "
   onpointerdown={handlePointerDown}
   onpointermove={handlePointerMove}
@@ -120,8 +123,20 @@
   <div
     class="pointer-events-none fixed z-50"
     style="left: {centerX}px; top: {centerY}px;"
-    transition:scale={{ duration: 200, start: 0.85 }}
+    transition:scale={{ duration: 220, start: FAB_SIZE_PIXELS / 88 }}
   >
+    <div
+      class="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
+      style="
+        width: {RING_RADIUS_PIXELS * 2}px;
+        height: {RING_RADIUS_PIXELS * 2}px;
+        left: 0;
+        top: 0;
+        border: 1px solid color-mix(in srgb, var(--highlight-med) 35%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--base) 40%, transparent);
+      "
+    ></div>
+
     <div
       class="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
       style="
@@ -171,14 +186,14 @@
 
     <div
       class={cn(
-        'absolute flex -translate-x-1/2 -translate-y-1/2 items-center',
+        'glass absolute flex -translate-x-1/2 -translate-y-1/2 items-center',
         'justify-center rounded-full text-center',
       )}
       style="
         width: 88px;
         height: 88px;
-        background: var(--overlay);
-        border: 1px solid color-mix(in srgb, var(--subtle) 25%, transparent);
+        background: color-mix(in srgb, var(--overlay) 92%, transparent);
+        border: 1px solid color-mix(in srgb, var(--highlight-med) 50%, transparent);
         box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.5);
       "
     >
