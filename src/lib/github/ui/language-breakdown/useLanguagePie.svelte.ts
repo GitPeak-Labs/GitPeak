@@ -1,3 +1,5 @@
+import { Tween } from 'svelte/motion'
+import { cubicOut } from 'svelte/easing'
 import type { GitHubLanguage } from '$lib/github/models/github-stats'
 import { pickAccentColor } from '$lib/theme/theme-manager'
 
@@ -103,34 +105,16 @@ export function useLanguagePie(getLanguages: () => GitHubLanguage[]) {
   const dimensions = getDimensions(isMobileDevice)
 
   let hoveredIndex = $state<number | null>(null)
-  let sweepDegrees = $state(-90)
+  const sweepDegrees = new Tween(-90, { duration: 1200, easing: cubicOut })
+  sweepDegrees.target = 270
   const slices = $derived(buildPieSlices(getLanguages()))
-
-  $effect(() => {
-    const animationDurationMs = 1200
-    const startTime = performance.now()
-    let animationFrameId: number
-
-    function animationTick(currentTime: number) {
-      const progressTime = Math.min((currentTime - startTime) / animationDurationMs, 1)
-      const easedProgress = 1 - Math.pow(1 - progressTime, 3)
-
-      sweepDegrees = -90 + easedProgress * 360
-
-      if (progressTime < 1) animationFrameId = requestAnimationFrame(animationTick)
-    }
-
-    animationFrameId = requestAnimationFrame(animationTick)
-
-    return () => cancelAnimationFrame(animationFrameId)
-  })
 
   const animatedSlices = $derived(
     slices
-      .filter((slice) => sweepDegrees > slice.startAngleDegrees)
+      .filter((slice) => sweepDegrees.current > slice.startAngleDegrees)
       .map((slice) => ({
         ...slice,
-        endAngleDegrees: Math.min(slice.endAngleDegrees, sweepDegrees),
+        endAngleDegrees: Math.min(slice.endAngleDegrees, sweepDegrees.current),
       })),
   )
 
