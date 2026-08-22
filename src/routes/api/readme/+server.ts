@@ -13,8 +13,8 @@ import { checkRateLimit } from '$lib/server/rate-limit'
 import { PRESET_THEMES, type ThemeTokens } from '$lib/theme/theme-manager'
 import type { RequestHandler } from './$types'
 
-const STATS_TIMEOUT_MILLISECONDS = 5000
-const AVATAR_TIMEOUT_MILLISECONDS = 1500
+const STATS_TIMEOUT_MILLISECONDS = 3000
+const AVATAR_TIMEOUT_MILLISECONDS = 1000
 
 function cleanSvg(svg: string): string {
   return svg.replace(/<!--[\s\S]*?-->/g, '').trim()
@@ -77,7 +77,7 @@ async function renderStatistics(
   return createReadmeSvgResponse(injectFontStyles(body, theme), cacheProfile)
 }
 
-async function attemptRender(username: string, theme: ThemeTokens): Promise<Response | null> {
+async function attemptRender(username: string, theme: ThemeTokens): Promise<Response> {
   const rateLimit = await checkRateLimit(username.toLowerCase())
 
   if (!rateLimit.success) {
@@ -118,12 +118,6 @@ async function attemptRender(username: string, theme: ThemeTokens): Promise<Resp
   return response
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-const RETRY_DELAY_MILLISECONDS = 300
-
 export const GET: RequestHandler = async (event) => {
   const username = event.url.searchParams.get('username')?.trim()
 
@@ -134,20 +128,17 @@ export const GET: RequestHandler = async (event) => {
   const theme = resolveTheme(event.url.searchParams.get('theme'))
 
   try {
-    const response = await attemptRender(username, theme)
-    if (response) return response
-  } catch (firstError) {
-    console.error('[readme] Render failed, retrying once:', firstError)
-    await sleep(RETRY_DELAY_MILLISECONDS)
-
-    try {
-      const response = await attemptRender(username, theme)
-      if (response) return response
-    } catch (secondError) {
-      console.error('[readme] Retry also failed, serving fallback card:', secondError)
-      return renderFallback(username, theme)
+    return await attemptRender(username, theme)
+  } catch (error) {
+    console.error('[readme] Render attempt failed, serving fallback card:', error)
+    const cachedStatistics = await getCachedReadmeStats(username).catch(() => null)
+    if (cachedStatistics) {
+      try {
+        return await renderStatistics(cachedStatistics, username, theme, 'stale')
+      } catch {
+        // Fall through to fallback card
+      }
     }
+    return renderFallback(username, theme)
   }
-
-  return renderFallback(username, theme, `User @${username} not found`)
 }
