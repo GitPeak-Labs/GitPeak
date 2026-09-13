@@ -9,7 +9,6 @@ import { buildReadmeFontStyles } from '$lib/widgets/readme-card/lib/readme-font-
 import { createReadmeSvgResponse } from '$lib/widgets/readme-card/lib/readme-response'
 import { cacheReadmeStats, getCachedReadmeStats } from '$lib/server/readme-stats-cache'
 import { fetchAsDataUri } from '$lib/server/remote-image'
-import { checkRateLimit } from '$lib/server/rate-limit'
 import { PRESET_THEMES, type ThemeTokens } from '$lib/entities/theme/model/theme-manager'
 import type { RequestHandler } from './$types'
 
@@ -48,6 +47,7 @@ function renderFallback(username: string, theme: ThemeTokens, message?: string):
 
 function resolveTheme(requestedTheme: string | null): ThemeTokens {
   if (!requestedTheme) return PRESET_THEMES['Rosé Pine']
+
   if (PRESET_THEMES[requestedTheme]) return PRESET_THEMES[requestedTheme]
 
   const normalized = requestedTheme.toLowerCase().replace(/[-_+]/g, ' ').trim()
@@ -78,31 +78,22 @@ async function renderStatistics(
 }
 
 async function attemptRender(username: string, theme: ThemeTokens): Promise<Response> {
-  const rateLimit = await checkRateLimit(username.toLowerCase())
-
-  if (!rateLimit.success) {
-    const cachedStatistics = await getCachedReadmeStats(username)
-    if (cachedStatistics) return renderStatistics(cachedStatistics, username, theme, 'stale')
-
-    return renderFallback(username, theme)
-  }
+  const cachedStatisticsPromise = getCachedReadmeStats(username)
 
   const client = createGithubClient({
     apiUrl: GHFETCH_STATS_URL,
     requestTimeoutMilliseconds: STATS_TIMEOUT_MILLISECONDS,
+    retry: false,
   })
 
-  // Read the last successful result alongside the upstream request. It adds no serial latency and
-  // lets cold serverless instances render the real card when the stats worker has a brief outage.
-  const cachedStatisticsPromise = getCachedReadmeStats(username)
   const result = await client.fetchStats(username)
 
   if (!result.ok) {
-    if (result.error.kind === 'not-found') {
+    if (result.error.kind === 'not-found')
       return renderFallback(username, theme, `User @${username} not found`)
-    }
 
     const cachedStatistics = await cachedStatisticsPromise
+
     if (cachedStatistics) return renderStatistics(cachedStatistics, username, theme, 'stale')
 
     return renderFallback(username, theme)
@@ -121,9 +112,8 @@ async function attemptRender(username: string, theme: ThemeTokens): Promise<Resp
 export const GET: RequestHandler = async (event) => {
   const username = event.url.searchParams.get('username')?.trim()
 
-  if (!username) {
+  if (!username)
     return renderFallback('unknown', PRESET_THEMES['Rosé Pine'], 'Please provide a username')
-  }
 
   const theme = resolveTheme(event.url.searchParams.get('theme'))
 

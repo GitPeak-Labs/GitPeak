@@ -10,7 +10,7 @@ export interface RateLimitResult {
 }
 
 let ratelimit: Ratelimit | null | undefined
-const RATE_LIMIT_TIMEOUT_MILLISECONDS = 750
+const RATE_LIMIT_TIMEOUT_MILLISECONDS = 300
 
 function getRatelimit(): Ratelimit | null {
   if (ratelimit !== undefined) return ratelimit
@@ -44,7 +44,6 @@ export async function checkRateLimit(identifier: string): Promise<RateLimitResul
     )
     return { success, limit, remaining, reset }
   } catch (error) {
-    // An unavailable rate-limit store must never take down a public image endpoint.
     console.warn('[rate-limit] Check failed — allowing request:', error)
     return { success: true, limit: 0, remaining: 0, reset: 0 }
   }

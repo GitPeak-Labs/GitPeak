@@ -4,6 +4,7 @@ import { githubStatsSchema, type GithubStats } from '../model/github-stats'
 export interface GithubClientConfig {
   apiUrl: string
   requestTimeoutMilliseconds: number
+  retry?: boolean
 }
 
 export interface GithubClientError {
@@ -98,6 +99,7 @@ async function attemptFetchStats(
       return error({ message: 'Could not load this profile — try again', kind: 'transient' })
 
     const parsedStats = githubStatsSchema.safeParse(keysToCamel(rawResponse.data))
+
     if (!parsedStats.success)
       return error({ message: 'Received an unexpected response — try again', kind: 'transient' })
 
@@ -137,7 +139,7 @@ export function createGithubClient(config: GithubClientConfig) {
       const firstAttempt = await attemptFetchStats(config, sanitizedUsername)
       let result = firstAttempt
 
-      if (isRetryable(firstAttempt)) {
+      if (config.retry !== false && isRetryable(firstAttempt)) {
         await sleep(RETRY_DELAY_MILLISECONDS)
         result = await attemptFetchStats(config, sanitizedUsername)
       }
