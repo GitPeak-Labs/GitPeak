@@ -9,3 +9,6 @@ dist/
 .DS_Store
 Thumbs.db
 .vercel/
+test-results/
+playwright-report/
+blob-report/

@@ -19,4 +19,6 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: package.json
+      - run: bun install
+      - run: bunx playwright install --with-deps chromium
       - run: bun run nuke

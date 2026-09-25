@@ -287,6 +287,15 @@ export default defineConfig(
     },
   },
   {
+    files: ['e2e/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-magic-numbers': 'off',
+      'sonarjs/no-duplicate-string': 'off',
+      'max-lines-per-function': 'off',
+      'max-statements': 'off',
+    },
+  },
+  {
     files: ['scripts/**/*.ts'],
     rules: {
       'no-console': 'off',

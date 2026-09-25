@@ -58,6 +58,27 @@ For example, to use the **Catppuccin Mocha** theme:
 
 ---
 
+## How Stats Are Calculated
+
+GitPeak doesn't compute stats itself. It displays whatever the
+[ghfetch](https://github.com/AmaneKai/ghfetch) worker returns from GitHub's GraphQL API. A few
+things worth knowing if a number looks surprising:
+
+- **Contribution and commit totals cover the trailing 12 months**, not your all-time GitHub
+  history, since that's how GitHub's own `contributionsCollection` works when no date range is
+  given.
+- **Language percentages are an average across repos, not a global byte count.** Each repo's
+  languages are turned into a share of that repo's bytes, then every repo you have language data
+  for is averaged evenly, so a tiny repo written in one language pulls that language's percentage
+  up just as much as a huge one would.
+- **"Most starred repo" only looks at repos you own.** A highly-starred repo you contributed to
+  elsewhere counts toward `totalStars`, but won't be picked as your most starred.
+
+See ghfetch's [How Stats Are Calculated](https://github.com/AmaneKai/ghfetch#how-stats-are-calculated)
+section for the exact formulas.
+
+---
+
 ## Tech Stack
 
 | Layer       | Technology                                      |
