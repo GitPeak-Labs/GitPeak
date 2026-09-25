@@ -71,7 +71,7 @@
     "@vercel/functions": "^3.9.9",
     "lucide-svelte": "^1.0.1",
     "vanilla-colorful": "^0.7.2",
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   },
   "trustedDependencies": [
     "unrs-resolver"
