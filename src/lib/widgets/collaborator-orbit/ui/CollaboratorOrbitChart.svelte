@@ -1,9 +1,23 @@
 <script lang="ts">
-  import type { CollaboratorOrbitNode } from '$lib/entities/github-stats/model/collaborator-orbit-calculations'
+  import type { CollaboratorOrbitNode } from '$lib/entities/github-stats'
   import { formatNumber } from '$lib/shared/lib/number-formatting'
   import * as Tooltip from '$lib/shared/ui/tooltip'
 
   const MAX_TOOLTIP_REPOS = 3
+  const INNER_RING_OFFSET_PIXELS = 10
+  const MIDDLE_RING_OFFSET_PIXELS = 5
+  const OUTER_RING_OFFSET_PIXELS = 12
+  const TOOLTIP_DELAY_MILLISECONDS = 200
+  const TOOLTIP_SIDE_OFFSET = 8
+  const ACTIVE_HALO_FILL_OPACITY = 0.3
+  const INACTIVE_HALO_FILL_OPACITY = 0.1
+  const ACTIVE_CORE_STROKE_WIDTH = 1.5
+  const WINDOW_OPEN_TARGET = '_blank'
+  const WINDOW_OPEN_FEATURES = 'noopener,noreferrer'
+
+  function openCollaboratorProfile(login: string): void {
+    window.open(`/?username=${encodeURIComponent(login)}`, WINDOW_OPEN_TARGET, WINDOW_OPEN_FEATURES)
+  }
 
   let {
     orbitNodes,
@@ -26,21 +40,21 @@
   <circle
     cx={centerX}
     cy={centerY}
-    r={innerRadiusPixels + 10}
+    r={innerRadiusPixels + INNER_RING_OFFSET_PIXELS}
     class="stroke-subtle/10 fill-none"
     stroke-dasharray="2 3"
   />
   <circle
     cx={centerX}
     cy={centerY}
-    r={(innerRadiusPixels + outerRadiusPixels) / 2 + 5}
+    r={(innerRadiusPixels + outerRadiusPixels) / 2 + MIDDLE_RING_OFFSET_PIXELS}
     class="stroke-subtle/5 fill-none"
     stroke-dasharray="2 3"
   />
   <circle
     cx={centerX}
     cy={centerY}
-    r={outerRadiusPixels + 12}
+    r={outerRadiusPixels + OUTER_RING_OFFSET_PIXELS}
     class="stroke-subtle/5 fill-none"
     stroke-dasharray="2 3"
   />
@@ -77,7 +91,7 @@
     {/if}
   {/each}
 
-  <Tooltip.Provider delayDuration={200}>
+  <Tooltip.Provider delayDuration={TOOLTIP_DELAY_MILLISECONDS}>
     {#each orbitNodes as node, index (node.login)}
       {@const isHovered = hoveredIndex === index}
 
@@ -85,12 +99,9 @@
         <Tooltip.Trigger
           onmouseenter={() => (hoveredIndex = index)}
           onmouseleave={() => (hoveredIndex = null)}
-          onclick={() =>
-            window.open(
-              `/?username=${encodeURIComponent(node.login)}`,
-              '_blank',
-              'noopener,noreferrer',
-            )}
+          onclick={() => {
+            openCollaboratorProfile(node.login)
+          }}
         >
           {#snippet child({ props }: { props: Record<string, unknown> })}
             <g
@@ -101,11 +112,7 @@
               onkeydown={(event: KeyboardEvent) => {
                 const isTrigger = event.key === 'Enter' || event.key === ' '
                 if (!isTrigger) return
-                window.open(
-                  `/?username=${encodeURIComponent(node.login)}`,
-                  '_blank',
-                  'noopener,noreferrer',
-                )
+                openCollaboratorProfile(node.login)
               }}
             >
               <circle
@@ -114,7 +121,7 @@
                 r={isHovered ? node.haloSizePixels + 2 : node.haloSizePixels}
                 fill={node.accentColor}
                 class="transition-all duration-200"
-                fill-opacity={isHovered ? 0.3 : 0.1}
+                fill-opacity={isHovered ? ACTIVE_HALO_FILL_OPACITY : INACTIVE_HALO_FILL_OPACITY}
               />
               <image
                 href={node.avatarUrl}
@@ -131,7 +138,7 @@
                 r={isHovered ? node.coreSizePixels + 1 : node.coreSizePixels}
                 fill="none"
                 stroke={node.accentColor}
-                stroke-width={isHovered ? 1.5 : 1}
+                stroke-width={isHovered ? ACTIVE_CORE_STROKE_WIDTH : 1}
                 class="transition-all duration-200"
               />
             </g>
@@ -140,7 +147,7 @@
 
         <Tooltip.Content
           side="top"
-          sideOffset={8}
+          sideOffset={TOOLTIP_SIDE_OFFSET}
           class="flex max-w-[220px] flex-col items-start gap-1 text-left normal-case"
         >
           <div class="text-muted text-[0.5625rem] tracking-wide uppercase">Shared repos</div>

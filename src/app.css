@@ -47,18 +47,15 @@
   --color-muted: var(--muted);
   --color-subtle: var(--subtle);
   --color-text: var(--text);
-
   --color-love: var(--love);
   --color-gold: var(--gold);
   --color-rose: var(--rose);
   --color-pine: var(--pine);
   --color-foam: var(--foam);
   --color-iris: var(--iris);
-
   --color-highlight-low: var(--highlight-low);
   --color-highlight-med: var(--highlight-med);
   --color-highlight-high: var(--highlight-high);
-
   --color-background: var(--base);
   --color-foreground: var(--text);
   --color-primary: var(--iris);
@@ -67,9 +64,7 @@
   --color-secondary-foreground: var(--text);
   --color-border: var(--highlight-low);
   --color-muted-foreground: var(--subtle);
-
   --color-accent: var(--theme-accent);
-
   --font-family-mono: 'DM Mono', 'JetBrains Mono', monospace;
   --font-family-serif: 'Instrument Serif', serif;
 }
@@ -92,7 +87,6 @@
     --highlight-low: #21202e;
     --highlight-med: #403d52;
     --highlight-high: #524f67;
-
     --border-glass: color-mix(in srgb, var(--highlight-med) 50%, transparent);
     --border-glass-faint: color-mix(in srgb, var(--highlight-med) 35%, transparent);
   }
@@ -238,7 +232,7 @@
   }
 }
 
-@media (max-width: 639px) {
+@media (width <= 639px) {
   input,
   textarea,
   select {
@@ -247,13 +241,11 @@
 
   .tilt-card {
     backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
     background: color-mix(in srgb, var(--surface) 85%, transparent) !important;
   }
 
   .glass {
     backdrop-filter: blur(12px) saturate(140%);
-    -webkit-backdrop-filter: blur(12px) saturate(140%);
   }
 
   .aurora-bg::before,
@@ -261,10 +253,6 @@
     filter: blur(60px);
   }
 }
-
-/* =========================================
-   AESTHETICS & BACKGROUNDS
-   ========================================= */
 
 .aurora-bg {
   position: fixed;
@@ -316,43 +304,40 @@
 .glass {
   background: color-mix(in srgb, var(--surface) 60%, transparent);
   backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid color-mix(in srgb, var(--subtle) 15%, transparent);
   box-shadow:
     0 1px 0 0 color-mix(in srgb, var(--text) 6%, transparent) inset,
-    0 32px 64px -16px rgba(0, 0, 0, 0.45);
+    0 32px 64px -16px rgb(0 0 0 / 45%);
 }
 
 .gradient-text {
   color: var(--iris);
   background: linear-gradient(135deg, var(--iris) 0%, var(--foam) 50%, var(--rose) 100%);
-  -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-
-/* =========================================
-   ANIMATIONS & INTERACTIONS
-   ========================================= */
 
 @keyframes drift {
   0%,
   100% {
     transform: translate(0, 0) scale(1);
   }
+
   33% {
     transform: translate(40px, -60px) scale(1.08);
   }
+
   66% {
     transform: translate(-30px, 40px) scale(0.95);
   }
 }
 
-@keyframes fadeInUp {
+@keyframes fade-in-up {
   from {
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -360,28 +345,30 @@
 }
 
 .fade-in-up {
-  animation: fadeInUp 0.5s ease both;
+  animation: fade-in-up 0.5s ease both;
 }
 
-@keyframes barGrow {
+@keyframes bar-grow {
   from {
     clip-path: inset(0 100% 0 0);
   }
+
   to {
     clip-path: inset(0 0% 0 0);
   }
 }
 
 .bar-grow {
-  animation: barGrow 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: bar-grow 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-@keyframes pulseDot {
+@keyframes pulse-dot {
   0%,
   100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.4;
     transform: scale(0.8);
@@ -389,7 +376,7 @@
 }
 
 .pulse-dot {
-  animation: pulseDot 1.4s ease-in-out infinite;
+  animation: pulse-dot 1.4s ease-in-out infinite;
 }
 
 .shimmer {
@@ -423,16 +410,12 @@
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(400%);
   }
 }
 
-/* =========================================
-   COMPONENT SPECIFIC EFFECTS
-   ========================================= */
-
-/* StatGrid Tilt Cards */
 .tilt-card {
   will-change: transform;
   transition:
@@ -449,12 +432,12 @@
   border-radius: inherit;
 }
 
-/* LanguagePie / Orbit Animations */
-@keyframes rowIn {
+@keyframes row-in {
   from {
     opacity: 0;
     transform: translateX(-4px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -492,7 +475,7 @@
     background-color 0.2s ease,
     transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
   touch-action: manipulation;
-  animation: rowIn 0.3s ease backwards;
+  animation: row-in 0.3s ease backwards;
   will-change: transform;
 }
 
@@ -550,12 +533,8 @@
 }
 
 .fade-in {
-  animation: rowIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: row-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-
-/* =========================================
-   SCROLLBARS
-   ========================================= */
 
 ::-webkit-scrollbar {
   width: 6px;
@@ -574,7 +553,7 @@
   max-height: 236px;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(144, 140, 170, 0.16) transparent;
+  scrollbar-color: rgb(144 140 170 / 16%) transparent;
   touch-action: pan-y;
 }
 
@@ -583,6 +562,6 @@
 }
 
 .legend-list::-webkit-scrollbar-thumb {
-  background: rgba(144, 140, 170, 0.16);
+  background: rgb(144 140 170 / 16%);
   border-radius: 99px;
 }

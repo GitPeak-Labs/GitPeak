@@ -7,8 +7,6 @@ export const ACCENT_COLORS = [
   'var(--iris)',
 ]
 
-export const COLORS = ACCENT_COLORS
-
 export function pickAccentColor(index: number): string {
   return ACCENT_COLORS[index % ACCENT_COLORS.length]
 }

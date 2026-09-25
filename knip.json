@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["scripts/*.ts"],
+  "ignoreDependencies": ["shadcn-svelte", "typescript-native"],
+  "ignoreIssues": {
+    "src/lib/shared/ui/**": ["exports", "types"]
+  }
+}

@@ -13,7 +13,6 @@ const config = {
         'default-src': ['self'],
         'connect-src': [
           'self',
-          // keep in sync with GHFETCH_BASE_URL in src/lib/github/api/config.ts
           'https://ghfetch.amanekai.workers.dev',
           'https://avatars.githubusercontent.com',
           'https://fonts.googleapis.com',

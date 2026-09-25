@@ -1,13 +1,17 @@
 import { describe, expect, test } from 'bun:test'
 import { PRESET_THEMES } from '$lib/entities/theme/model/theme-manager'
-import { buildReadmeFontStyles } from './readme-font-styles'
+import { buildOgStyles, buildReadmeFontStyles } from './readme-font-styles'
+
+const THEME = PRESET_THEMES['Rosé Pine']
 
 describe('buildReadmeFontStyles', () => {
   test('embeds compressed local fonts', () => {
     const styles = buildReadmeFontStyles(
-      'data:font/woff2;base64,mono',
-      'data:font/woff2;base64,serif',
-      PRESET_THEMES['Rosé Pine'],
+      {
+        monoFontDataUri: 'data:font/woff2;base64,mono',
+        serifFontDataUri: 'data:font/woff2;base64,serif',
+      },
+      THEME,
     )
 
     expect(styles).toContain("url('data:font/woff2;base64,mono') format('woff2')")
@@ -15,9 +19,25 @@ describe('buildReadmeFontStyles', () => {
   })
 
   test('omits invalid font faces when no font data is available', () => {
-    const styles = buildReadmeFontStyles('', '', PRESET_THEMES['Rosé Pine'])
+    const styles = buildReadmeFontStyles({ monoFontDataUri: '', serifFontDataUri: '' }, THEME)
 
     expect(styles).not.toContain('@font-face')
     expect(styles).toContain('.text-main')
+  })
+
+  test('ships the entrance animations with the browser-facing card', () => {
+    const styles = buildReadmeFontStyles({ monoFontDataUri: '', serifFontDataUri: '' }, THEME)
+
+    expect(styles).toContain('@keyframes fade-up')
+    expect(styles).toContain('.anim-grow')
+  })
+})
+
+describe('buildOgStyles', () => {
+  test('keeps the rasterized card free of animations', () => {
+    const styles = buildOgStyles(THEME)
+
+    expect(styles).toContain('.text-serif')
+    expect(styles).not.toContain('@keyframes')
   })
 })

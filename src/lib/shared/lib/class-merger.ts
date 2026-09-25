@@ -5,9 +5,8 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs))
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type WithElementRef<T, HTMLAttributes = any> = HTMLAttributes & {
-  el?: T
+export type WithElementRef<T, ElementType extends HTMLElement = HTMLElement> = T & {
+  ref?: ElementType | null
 }
 
 export type WithoutChild<T> = Omit<T, 'child'>

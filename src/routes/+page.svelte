@@ -25,8 +25,7 @@
   function handleSearchSubmit(username: string) {
     const targetUrl = `/?username=${encodeURIComponent(username)}`
 
-    // eslint-disable-next-line svelte/no-navigation-without-resolve
-    goto(targetUrl, { keepFocus: true, noScroll: true })
+    void goto(targetUrl, { keepFocus: true, noScroll: true })
     searchManager.onSearch(username)
   }
 </script>

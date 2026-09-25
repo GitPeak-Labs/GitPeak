@@ -7,7 +7,7 @@ const SIMPLE_ICONS: Readonly<Record<string, string>> = {
   ruby: 'ruby',
   kotlin: 'kotlin',
   swift: 'swift',
-  c: 'c',
+  ['c']: 'c',
   'c++': 'cplusplus',
   'c#': 'dotnet',
   php: 'php',
@@ -30,7 +30,7 @@ const SIMPLE_ICONS: Readonly<Record<string, string>> = {
   zig: 'zig',
   clojure: 'clojure',
   erlang: 'erlang',
-  r: 'r',
+  ['r']: 'r',
   julia: 'julia',
   perl: 'perl',
   ocaml: 'ocaml',
@@ -54,11 +54,4 @@ export function langIconUrl(name: string): string {
   const slug = SIMPLE_ICONS[normalizedName]
 
   return slug ? `https://cdn.simpleicons.org/${slug}` : ''
-}
-
-export function hideImgOnError(e: Event): void {
-  const img = e.currentTarget as HTMLImageElement
-  img.style.display = 'none'
-  const fallback = img.nextElementSibling as HTMLElement | null
-  if (fallback) fallback.style.display = 'block'
 }

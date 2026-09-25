@@ -2,7 +2,7 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { withTimeout } from '$lib/shared/lib/promise-timeout'
 import { getRedis } from './redis'
 
-export interface RateLimitResult {
+export type RateLimitResult = {
   success: boolean
   limit: number
   remaining: number
@@ -10,7 +10,15 @@ export interface RateLimitResult {
 }
 
 let ratelimit: Ratelimit | null | undefined
-const RATE_LIMIT_TIMEOUT_MILLISECONDS = 300
+const RATE_LIMIT_TIMEOUT_MILLISECONDS = 750
+const RATE_LIMIT_MAX_REQUESTS = 60
+const RATE_LIMIT_WINDOW = '60 s'
+const FAIL_OPEN_RATE_LIMIT_RESULT: RateLimitResult = {
+  success: true,
+  limit: 0,
+  remaining: 0,
+  reset: 0,
+}
 
 function getRatelimit(): Ratelimit | null {
   if (ratelimit !== undefined) return ratelimit
@@ -24,7 +32,7 @@ function getRatelimit(): Ratelimit | null {
 
   ratelimit = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(60, '60 s'),
+    limiter: Ratelimit.slidingWindow(RATE_LIMIT_MAX_REQUESTS, RATE_LIMIT_WINDOW),
     prefix: 'gitpeak-image-endpoints',
   })
 
@@ -34,17 +42,22 @@ function getRatelimit(): Ratelimit | null {
 export async function checkRateLimit(identifier: string): Promise<RateLimitResult> {
   const limiter = getRatelimit()
 
-  if (!limiter) return { success: true, limit: 0, remaining: 0, reset: 0 }
+  if (!limiter) return FAIL_OPEN_RATE_LIMIT_RESULT
 
   try {
-    const { success, limit, remaining, reset } = await withTimeout(
+    const {
+      success: isAllowed,
+      limit,
+      remaining,
+      reset,
+    } = await withTimeout(
       limiter.limit(identifier),
       RATE_LIMIT_TIMEOUT_MILLISECONDS,
       'Rate-limit store timed out',
     )
-    return { success, limit, remaining, reset }
+    return { success: isAllowed, limit, remaining, reset }
   } catch (error) {
     console.warn('[rate-limit] Check failed — allowing request:', error)
-    return { success: true, limit: 0, remaining: 0, reset: 0 }
+    return FAIL_OPEN_RATE_LIMIT_RESULT
   }
 }

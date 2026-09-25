@@ -6,9 +6,16 @@
   import {
     buildThemedSlices,
     groupSlicesForLegend,
+    legendRowsFor,
   } from '$lib/entities/github-stats/model/language-slices'
-  import { monoNameBudget, wrapName } from '$lib/shared/lib/legend-fit'
+  import { wrapName } from '$lib/shared/lib/legend-fit'
   import { containsCjk } from '$lib/shared/lib/script-segments'
+  import {
+    layoutLandscape,
+    placeLandscapeLegend,
+    placeLandscapeStats,
+  } from '../lib/landscape-layout'
+  import { buildWallpaperStats } from '../lib/wallpaper-stats'
   import WallpaperDonut from './WallpaperDonut.svelte'
 
   let {
@@ -29,134 +36,38 @@
     scaleUnit: number
   } = $props()
 
-  const displayName = $derived(statistics.displayName || username)
-  const truncatedName = $derived(
-    displayName.length > 24 ? `${displayName.slice(0, 23)}…` : displayName,
+  const MAX_NAME_CHARS = 24
+  const STAR_CAPABLE_FONT_STYLE = "font-family:'Noto Serif JP'"
+  const FOLDED_ROW_OPACITY = 0.6
+  const LEGEND_NAME_OPACITY = 0.9
+
+  const displayName = $derived(wrapName(statistics.displayName || username, MAX_NAME_CHARS, 1)[0])
+  const nameFontStyle = $derived(containsCjk(displayName) ? STAR_CAPABLE_FONT_STYLE : undefined)
+  const allSlices = $derived(buildThemedSlices(statistics.languages, theme))
+  const legendRows = $derived(legendRowsFor(groupSlicesForLegend(allSlices), theme.muted))
+  const topRepo = $derived(statistics.mostStarredRepo)
+  const layout = $derived(layoutLandscape({ width, height, scaleUnit }))
+  const legend = $derived(placeLandscapeLegend(legendRows, layout, scaleUnit))
+  const placedStats = $derived(
+    placeLandscapeStats(buildWallpaperStats(statistics, theme), layout, scaleUnit),
   )
-  const nameFontFamily = $derived(containsCjk(truncatedName) ? "'Noto Serif JP'" : undefined)
-  const allSlices = $derived(buildThemedSlices(statistics.languages ?? [], theme))
-  const legendGrouping = $derived(groupSlicesForLegend(allSlices))
-  const legendRows: {
-    name: string
-    percentage: number
-    color: string
-    muted: boolean
-  }[] = $derived([
-    ...legendGrouping.displayed.map((slice) => ({
-      name: slice.name,
-      percentage: slice.percentage,
-      color: slice.color,
-      muted: false,
-    })),
-    ...(legendGrouping.otherCount > 0
-      ? [
-          {
-            name: `+${legendGrouping.otherCount} more`,
-            percentage: legendGrouping.otherPercent,
-            color: theme.muted,
-            muted: true,
-          },
-        ]
-      : []),
-  ])
-  const hasTopRepo = $derived(!!statistics.mostStarredRepo)
-
-  const PADDING = $derived(scaleUnit * 6)
-  const contentX = $derived(PADDING)
-  const contentY = $derived(PADDING)
-  const contentWidth = $derived(width - PADDING * 2)
-  const contentHeight = $derived(height - PADDING * 2)
-
-  // Name spans the full width above the two-column body — keeps it clear of the donut's
-  // vertical range so a long display name can never overlap the ring.
-  const columnGap = $derived(scaleUnit * 6)
-  const leftColumnWidth = $derived(contentWidth * 0.38)
-  const rightColumnX = $derived(contentX + leftColumnWidth + columnGap)
-  const rightColumnWidth = $derived(contentWidth - leftColumnWidth - columnGap)
-
-  const nameBaselineY = $derived(contentY + scaleUnit * 4.4)
-  const handleBaselineY = $derived(nameBaselineY + scaleUnit * 2.1)
-  const brandBaselineY = $derived(contentY + scaleUnit * 1.6)
-
-  const ruleY = $derived(handleBaselineY + scaleUnit * 2.6)
-  const bodyTop = $derived(ruleY + scaleUnit * 3)
-  const bodyBottom = $derived(contentY + contentHeight - scaleUnit * 2)
-  const dividerX = $derived(contentX + leftColumnWidth + columnGap / 2)
-
-  const statLabels = $derived([
-    { label: 'Contributions', value: statistics.totalContributions, accent: 'foam' },
-    { label: 'Commits', value: statistics.totalCommits, accent: 'iris' },
-    { label: 'Stars', value: statistics.totalStars, accent: 'gold' },
-    { label: 'Repos', value: statistics.totalRepos, accent: 'pine' },
-    { label: 'Followers', value: statistics.followers, accent: 'rose' },
-    { label: 'Pull Requests', value: statistics.totalPrs, accent: 'love' },
-  ])
-
-  const statRowStep = $derived(scaleUnit * 8.6)
-  const labelValueGap = $derived(scaleUnit * 3)
-  const statsTop = $derived(bodyTop + scaleUnit * 2)
-  const statColumnWidth = $derived(leftColumnWidth / 2)
-
-  const topRepoValueY = $derived(bodyBottom - scaleUnit * 0.4)
-  const topRepoLabelY = $derived(topRepoValueY - scaleUnit * 3.4)
-
-  const outerRadius = $derived(scaleUnit * 16.5)
-  const innerRadius = $derived(outerRadius * 0.63)
-  const legendGap = $derived(scaleUnit * 4)
-  const legendWidth = $derived(scaleUnit * 11)
-  const heroGroupWidth = $derived(outerRadius * 2 + legendGap + legendWidth)
-  const heroLeftX = $derived(rightColumnX + Math.max(0, (rightColumnWidth - heroGroupWidth) / 2))
-  const donutCenterX = $derived(heroLeftX + outerRadius)
-  const donutCenterY = $derived((bodyTop + bodyBottom) / 2)
-
-  const legendX = $derived(donutCenterX + outerRadius + legendGap)
-  const legendMaxHeight = $derived(outerRadius * 1.9)
-  const legendRowStep = $derived(
-    legendRows.length > 1
-      ? Math.min(scaleUnit * 2.3, legendMaxHeight / (legendRows.length - 1))
-      : 0,
-  )
-  const legendFontSize = $derived(
-    Math.min(scaleUnit * 1.1, Math.max(legendRowStep * 0.7, scaleUnit * 0.55)),
-  )
-  // Long names ("Jupyter Notebook") wrap onto a second, tighter line instead of running into
-  // their percent label, so each row carries its own vertical offset.
-  const legendLineHeight = $derived(legendFontSize * 1.35)
-  const legendEntries = $derived.by(() => {
-    let offsetY = 0
-    return legendRows.map((row) => {
-      const lines = wrapName(
-        row.name,
-        monoNameBudget(legendWidth - scaleUnit, legendFontSize, row.percentage),
-      )
-      const entry = { ...row, lines, offsetY }
-      offsetY += legendRowStep + (lines.length - 1) * legendLineHeight
-      return entry
-    })
-  })
-  // Baseline-to-baseline height of the whole legend, wrapped lines included.
-  const legendSpan = $derived.by(() => {
-    const lastEntry = legendEntries.at(-1)
-    return lastEntry ? lastEntry.offsetY + (lastEntry.lines.length - 1) * legendLineHeight : 0
-  })
-  const legendStartY = $derived(donutCenterY - legendSpan / 2)
 </script>
 
 <text
-  x={contentX}
-  y={nameBaselineY}
+  x={layout.contentX}
+  y={layout.nameBaselineY}
   class="text-serif"
-  font-size={scaleUnit * 4.2}
+  font-size={layout.nameFontSize}
   font-weight="700"
-  style={nameFontFamily ? `font-family:${nameFontFamily}` : undefined}
+  style={nameFontStyle}
 >
-  {truncatedName}
+  {displayName}
 </text>
 <text
-  x={contentX}
-  y={handleBaselineY}
+  x={layout.contentX}
+  y={layout.handleBaselineY}
   class="text-main"
-  font-size={scaleUnit * 1.15}
+  font-size={layout.handleFontSize}
   opacity="0.85"
   style="fill:{theme.subtle}"
 >
@@ -164,31 +75,31 @@
 </text>
 
 <line
-  x1={contentX}
-  y1={ruleY}
-  x2={contentX + contentWidth}
-  y2={ruleY}
+  x1={layout.contentX}
+  y1={layout.ruleY}
+  x2={layout.contentX + layout.contentWidth}
+  y2={layout.ruleY}
   stroke={theme.muted}
   stroke-opacity="0.25"
-  stroke-width={scaleUnit * 0.06}
+  stroke-width={layout.hairlineWidth}
 />
 <line
-  x1={dividerX}
-  y1={bodyTop}
-  x2={dividerX}
-  y2={bodyBottom}
+  x1={layout.dividerX}
+  y1={layout.bodyTop}
+  x2={layout.dividerX}
+  y2={layout.bodyBottom}
   stroke={theme.muted}
   stroke-opacity="0.18"
-  stroke-width={scaleUnit * 0.06}
+  stroke-width={layout.hairlineWidth}
 />
 
 <text
-  x={contentX + contentWidth}
-  y={brandBaselineY}
+  x={layout.contentX + layout.contentWidth}
+  y={layout.brandBaselineY}
   class="text-serif"
-  font-size={scaleUnit * 1.4}
+  font-size={layout.brandFontSize}
   text-anchor="end"
-  style="fill:url(#brand-gradient)"
+  style="fill:url('#brand-gradient')"
 >
   GitPeak
 </text>
@@ -198,105 +109,94 @@
     slices={allSlices}
     {theme}
     {avatarDataUri}
-    centerX={donutCenterX}
-    centerY={donutCenterY}
-    {outerRadius}
-    {innerRadius}
+    centerX={layout.donutCenterX}
+    centerY={layout.donutCenterY}
+    outerRadius={layout.outerRadius}
+    innerRadius={layout.innerRadius}
     filterId="wp-donut-glow-ls"
   />
 
-  {#each legendEntries as slice (slice.name)}
-    {@const rowY = legendStartY + slice.offsetY}
+  {#each legend.rows as legendRow (legendRow.name)}
     <circle
-      cx={legendX}
-      cy={rowY - legendFontSize * 0.32}
-      r={legendFontSize * 0.36}
-      fill={slice.color}
-      opacity={slice.muted ? 0.6 : 1}
+      cx={layout.legendX}
+      cy={legendRow.dotY}
+      r={legendRow.dotRadius}
+      fill={legendRow.color}
+      opacity={legendRow.isFoldedRemainder ? FOLDED_ROW_OPACITY : 1}
     />
-    {#each slice.lines as line, lineIndex (lineIndex)}
+    {#each legendRow.nameLines as nameLine, lineIndex (lineIndex)}
       <text
-        x={legendX + scaleUnit}
-        y={rowY + lineIndex * legendLineHeight}
+        x={layout.legendX + scaleUnit}
+        y={legendRow.baselineY + lineIndex * legend.lineHeight}
         class="text-main"
-        font-size={legendFontSize}
-        opacity={slice.muted ? 0.6 : 0.9}
+        font-size={legend.fontSize}
+        opacity={legendRow.isFoldedRemainder ? FOLDED_ROW_OPACITY : LEGEND_NAME_OPACITY}
       >
-        {line}
+        {nameLine}
       </text>
     {/each}
     <text
-      x={legendX + legendWidth}
-      y={rowY}
+      x={layout.legendX + layout.legendWidth}
+      y={legendRow.baselineY}
       class="text-main"
-      font-size={legendFontSize}
+      font-size={legend.fontSize}
       font-weight="600"
       text-anchor="end"
-      opacity={slice.muted ? 0.6 : 1}
-      style="fill:{slice.color}"
+      opacity={legendRow.isFoldedRemainder ? FOLDED_ROW_OPACITY : 1}
+      style="fill:{legendRow.color}"
     >
-      {slice.percentage}%
+      {legendRow.percentage}%
     </text>
   {/each}
 {/if}
 
-{#each statLabels as item, index (item.label)}
-  {@const column = index % 2}
-  {@const row = Math.floor(index / 2)}
-  {@const columnX = contentX + column * statColumnWidth}
-  {@const labelY = statsTop + row * statRowStep}
-  {@const valueY = labelY + labelValueGap}
-  {@const accent = theme[item.accent]}
-
+{#each placedStats as stat (stat.label)}
   <text
-    x={columnX}
-    y={labelY}
+    x={stat.x}
+    y={stat.labelY}
     class="text-main"
-    font-size={scaleUnit * 0.95}
+    font-size={layout.statLabelFontSize}
     letter-spacing="0.14em"
     font-weight="600"
     opacity="0.8"
   >
-    {item.label.toUpperCase()}
+    {stat.label.toUpperCase()}
   </text>
   <text
-    x={columnX}
-    y={valueY}
+    x={stat.x}
+    y={stat.valueY}
     class="text-serif"
-    font-size={scaleUnit * 2.9}
+    font-size={layout.statValueFontSize}
     font-weight="700"
-    style="fill:{accent}"
+    style="fill:{stat.color}"
   >
-    {formatNumber(item.value)}
+    {stat.countLabel}
   </text>
 {/each}
 
-{#if hasTopRepo}
-  {@const repo = statistics.mostStarredRepo!}
+{#if topRepo}
   <text
-    x={contentX}
-    y={topRepoLabelY}
+    x={layout.contentX}
+    y={layout.topRepoLabelY}
     class="text-main"
-    font-size={scaleUnit * 0.95}
+    font-size={layout.statLabelFontSize}
     letter-spacing="0.14em"
     font-weight="600"
     opacity="0.8"
   >
     TOP REPOSITORY
   </text>
-  <!-- ★ isn't in Gelasio or JetBrains Mono — same per-chunk font defect as containsCjk, just
-       triggered by a symbol. Noto Serif JP covers both, so pin the whole line to it. -->
   <text
-    x={contentX}
-    y={topRepoValueY}
+    x={layout.contentX}
+    y={layout.topRepoValueY}
     class="text-serif"
-    font-size={scaleUnit * 1.9}
+    font-size={layout.topRepoNameFontSize}
     font-weight="700"
-    style="font-family:'Noto Serif JP'"
+    style={STAR_CAPABLE_FONT_STYLE}
   >
-    {repo.name}
-    <tspan fill={theme.gold} dx={scaleUnit * 0.8} font-size={scaleUnit * 1.5}
-      >★ {formatNumber(repo.stars)}</tspan
+    {topRepo.name}
+    <tspan fill={theme.gold} dx={layout.topRepoStarsGap} font-size={layout.topRepoStarsFontSize}
+      >★ {formatNumber(topRepo.stars)}</tspan
     >
   </text>
 {/if}

@@ -27,6 +27,19 @@
   const AVATAR_SIZE = 72
   const NAME_MAX_CHARACTERS = 22
 
+  const AVATAR_X_OFFSET = 14
+  const AVATAR_Y_OFFSET = 16
+  const TEXT_X_GAP = 18
+
+  const AGE_BADGE_RIGHT_OFFSET = 96
+  const AGE_BADGE_Y_OFFSET = 16
+  const AGE_BADGE_TEXT_RIGHT_OFFSET = 55
+  const AGE_BADGE_TEXT_Y_OFFSET = 31
+
+  const DISPLAY_NAME_Y_OFFSET = 40
+  const USERNAME_Y_OFFSET = 62
+  const FOLLOW_STATS_BOTTOM_INSET = 18
+
   const displayName = $derived(statistics.displayName || username)
   const truncatedName = $derived(
     displayName.length > NAME_MAX_CHARACTERS
@@ -35,9 +48,9 @@
   )
   const nameFontFamily = $derived(containsCjk(truncatedName) ? "'Noto Serif JP'" : undefined)
 
-  const avatarX = $derived(x + 14)
-  const avatarY = $derived(y + 16)
-  const textX = $derived(avatarX + AVATAR_SIZE + 18)
+  const avatarX = $derived(x + AVATAR_X_OFFSET)
+  const avatarY = $derived(y + AVATAR_Y_OFFSET)
+  const textX = $derived(avatarX + AVATAR_SIZE + TEXT_X_GAP)
   const age = $derived(accountAge(statistics.accountCreatedAt))
 </script>
 
@@ -80,8 +93,8 @@
 />
 
 <rect
-  x={x + width - 96}
-  y={y + 16}
+  x={x + width - AGE_BADGE_RIGHT_OFFSET}
+  y={y + AGE_BADGE_Y_OFFSET}
   width="82"
   height="22"
   rx="11"
@@ -91,8 +104,8 @@
   stroke-opacity="0.25"
 />
 <text
-  x={x + width - 55}
-  y={y + 31}
+  x={x + width - AGE_BADGE_TEXT_RIGHT_OFFSET}
+  y={y + AGE_BADGE_TEXT_Y_OFFSET}
   class="text-main"
   fill={theme.foam}
   font-size="10"
@@ -103,15 +116,21 @@
 
 <text
   x={textX}
-  y={y + 40}
+  y={y + DISPLAY_NAME_Y_OFFSET}
   class="text-serif"
   font-size="26"
   style={nameFontFamily ? `font-family:${nameFontFamily}` : undefined}>{truncatedName}</text
 >
-<text x={textX} y={y + 62} class="text-main" fill={theme.subtle} font-size="13">
+<text x={textX} y={y + USERNAME_Y_OFFSET} class="text-main" fill={theme.subtle} font-size="13">
   @{username}
 </text>
-<text x={textX} y={y + HEIGHT - 18} class="text-main" fill={theme.subtle} font-size="11">
+<text
+  x={textX}
+  y={y + HEIGHT - FOLLOW_STATS_BOTTOM_INSET}
+  class="text-main"
+  fill={theme.subtle}
+  font-size="11"
+>
   <tspan fill={theme.text} font-weight="600">{formatNumber(statistics.followers)}</tspan>
   followers
   <tspan dx="10" fill={theme.text} font-weight="600">{formatNumber(statistics.following)}</tspan>

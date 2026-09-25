@@ -9,12 +9,15 @@
 
   type Variant = 'hero' | 'detail'
 
+  const ANIMATION_DELAY_STEP_MILLISECONDS = 50
+  const TRUNCATED_LABEL_CLASS = 'truncate font-mono text-[0.5625rem] text-(--subtle)'
+
   const VARIANT_STYLES = {
     hero: {
       cardClass: 'rounded-2xl',
       contentClass: 'relative z-10 flex flex-col gap-3 p-[14px_16px] sm:gap-4 sm:p-[18px_20px]',
       labelClass: cn(
-        'truncate font-mono text-[0.5625rem] text-(--subtle)',
+        TRUNCATED_LABEL_CLASS,
         'tracking-wider uppercase sm:text-[0.625rem] sm:tracking-widest',
       ),
       iconWrapClass: cn(
@@ -33,10 +36,7 @@
     detail: {
       cardClass: 'rounded-[14px] last:col-span-2 sm:last:col-span-1',
       contentClass: 'relative z-10 flex flex-col gap-1.5 p-[10px_12px] sm:gap-2 sm:p-[12px_14px]',
-      labelClass: cn(
-        'truncate font-mono text-[0.5625rem] text-(--subtle)',
-        'tracking-wider uppercase sm:tracking-widest',
-      ),
+      labelClass: cn(TRUNCATED_LABEL_CLASS, 'tracking-wider uppercase sm:tracking-widest'),
       iconWrapClass: cn(
         'flex h-4 w-4 shrink-0 bg-(--accent-bg) text-(--accent)',
         'items-center justify-center rounded-md sm:h-5 sm:w-5',
@@ -53,7 +53,7 @@
   } as const
 
   let {
-    item,
+    statItem,
     tiltState,
     index,
     isTouchDevice,
@@ -62,18 +62,18 @@
     onMove,
     onLeave,
   }: {
-    item: StatItem
+    statItem: StatItem
     tiltState: TiltState
     index: number
     isTouchDevice: boolean
     variant: Variant
-    onEnter: (e: MouseEvent) => void
-    onMove: (e: MouseEvent) => void
-    onLeave: (e: MouseEvent) => void
+    onEnter: (pointerEvent: MouseEvent) => void
+    onMove: (pointerEvent: MouseEvent) => void
+    onLeave: (pointerEvent: MouseEvent) => void
   } = $props()
 
-  const Icon = $derived(item.icon as Component)
-  const themeColor = $derived(`var(--${item.accentVar})`)
+  const Icon = $derived(statItem.icon as Component)
+  const themeColor = $derived(`var(--${statItem.accentVar})`)
   const style = $derived(VARIANT_STYLES[variant])
 </script>
 
@@ -88,7 +88,7 @@
     --accent: ${themeColor};
     --accent-bg: color-mix(in srgb, ${themeColor} 10%, transparent);
     ${tiltStyle(tiltState)};
-    animation-delay: ${index * 50}ms;
+    animation-delay: ${index * ANIMATION_DELAY_STEP_MILLISECONDS}ms;
   `}
   onmouseenter={!isTouchDevice ? onEnter : undefined}
   onmousemove={!isTouchDevice ? onMove : undefined}
@@ -108,7 +108,7 @@
   <Card.Content class={style.contentClass}>
     <div class="flex items-center justify-between gap-1.5">
       <span class={style.labelClass}>
-        {item.label}
+        {statItem.label}
       </span>
       <span class={style.iconWrapClass}>
         <Icon size={style.iconSize} />
@@ -119,7 +119,7 @@
       class="font-serif leading-none font-bold tracking-tight text-(--text)"
       style={style.valueStyle}
     >
-      {formatNumber(item.value)}
+      {formatNumber(statItem.count)}
     </span>
 
     <div

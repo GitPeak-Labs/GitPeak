@@ -8,6 +8,7 @@ import {
 const THEME_TOKEN_KEYS = Object.keys(TOKEN_LABELS)
 const HEX_COLOR_PATTERN = /^[0-9a-fA-F]{3,8}$/
 const TOKEN_SEPARATOR = '-'
+const LEADING_HASH_PATTERN = /^#/
 
 export function packThemeTokens(tokens: ThemeTokens): string {
   return THEME_TOKEN_KEYS.map((key) => stripLeadingHash(tokens[key] ?? '')).join(TOKEN_SEPARATOR)
@@ -16,17 +17,14 @@ export function packThemeTokens(tokens: ThemeTokens): string {
 export function parseThemeParameter(packed: string | null): ThemeTokens | null {
   if (!packed) return null
 
-  const values = packed.split(TOKEN_SEPARATOR)
-  if (values.length !== THEME_TOKEN_KEYS.length) return null
+  const hexDigitGroups = packed.split(TOKEN_SEPARATOR)
+  const hasOneColorPerToken = hexDigitGroups.length === THEME_TOKEN_KEYS.length
+  const isEveryGroupHex = hexDigitGroups.every((hexDigits) => HEX_COLOR_PATTERN.test(hexDigits))
+  if (!hasOneColorPerToken || !isEveryGroupHex) return null
 
-  const tokens: ThemeTokens = {}
-  for (const [index, key] of THEME_TOKEN_KEYS.entries()) {
-    const value = values[index]
-    if (!HEX_COLOR_PATTERN.test(value)) return null
-    tokens[key] = `#${value}`
-  }
-
-  return tokens
+  return Object.fromEntries(
+    THEME_TOKEN_KEYS.map((key, index) => [key, `#${hexDigitGroups[index]}`]),
+  )
 }
 
 export function resolveWallpaperTheme(
@@ -35,11 +33,16 @@ export function resolveWallpaperTheme(
 ): ThemeTokens {
   return (
     parseThemeParameter(packedCustomTokens) ??
-    PRESET_THEMES[presetName ?? ''] ??
+    presetThemeNamed(presetName) ??
     PRESET_THEMES[DEFAULT_PRESET_NAME]
   )
 }
 
-function stripLeadingHash(value: string): string {
-  return value.trim().replace(/^#/, '')
+function presetThemeNamed(presetName: string | null): ThemeTokens | undefined {
+  const isKnownPreset = presetName !== null && Object.hasOwn(PRESET_THEMES, presetName)
+  return isKnownPreset ? PRESET_THEMES[presetName] : undefined
+}
+
+function stripLeadingHash(color: string): string {
+  return color.trim().replace(LEADING_HASH_PATTERN, '')
 }

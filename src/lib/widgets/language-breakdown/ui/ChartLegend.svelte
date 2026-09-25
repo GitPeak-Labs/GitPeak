@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { langIconUrl as getLanguageIconUrl } from '$lib/widgets/language-breakdown/lib/language-icons'
+  import { langIconUrl as getLanguageIconUrl } from '../lib/language-icons'
   import type { PieSlice } from '$lib/shared/lib/pie-geometry'
   import type { OrbitNode } from '$lib/entities/github-stats/model/orbit-calculations'
   import type {
@@ -12,6 +12,30 @@
   import { cn } from '$lib/shared/lib/class-merger'
 
   const MAX_TOOLTIP_REPOS = 3
+  const ROW_ANIMATION_DELAY_STEP_MILLISECONDS = 30
+  const BAR_ANIMATION_DELAY_STEP_MILLISECONDS = 20
+  const ACTIVE_FONT_WEIGHT = 500
+  const INACTIVE_FONT_WEIGHT = 400
+  const ACTIVE_PERCENTAGE_FONT_WEIGHT = 600
+  const INACTIVE_BAR_OPACITY = 0.55
+  const COLLABORATOR_TOOLTIP_DELAY_MILLISECONDS = 200
+  const COLLABORATOR_TOOLTIP_SIDE_OFFSET = 8
+  const ROW_TRANSITION_CLASS = 'transition-all duration-200'
+  const ACTIVE_ROW_TRANSLATE_CLASS = 'translate-x-[1.5px]'
+  const ICON_WRAP_TRANSITION_CLASS = 'transition-all'
+  const ACTIVE_ICON_SCALE_CLASS = 'scale-105'
+  const DEFAULT_TEXT_COLOR = 'var(--text)'
+  const INACTIVE_SUBTLE_COLOR = 'var(--subtle)'
+  const ICON_WRAP_BASE_CLASS = 'flex h-6 w-6 shrink-0 items-center justify-center rounded-md'
+
+  function buildRowStyle(color: string, isActive: boolean, index: number): string {
+    const background = isActive ? `color-mix(in srgb, ${color} 12%, transparent)` : 'transparent'
+    return `
+      background-color: ${background};
+      color: ${isActive ? color : DEFAULT_TEXT_COLOR};
+      animation-delay: ${index * ROW_ANIMATION_DELAY_STEP_MILLISECONDS}ms;
+    `
+  }
 
   let {
     viewMode,
@@ -42,26 +66,18 @@
             role="presentation"
             class={cn(
               'flex cursor-default items-center gap-2 rounded-lg px-2 py-1 select-none',
-              'transition-all duration-200',
-              isSliceActive ? 'translate-x-[1.5px]' : '',
+              ROW_TRANSITION_CLASS,
+              isSliceActive ? ACTIVE_ROW_TRANSLATE_CLASS : '',
             )}
-            style={`
-              background-color: ${
-                isSliceActive
-                  ? `color-mix(in srgb, ${slice.color} 12%, transparent)`
-                  : 'transparent'
-              };
-              color: ${isSliceActive ? slice.color : 'var(--text)'};
-              animation-delay: ${index * 30}ms;
-            `}
+            style={buildRowStyle(slice.color, isSliceActive, index)}
             onmouseenter={() => (hoveredIndex = index)}
             onmouseleave={() => (hoveredIndex = null)}
           >
             <span
               class={cn(
-                'flex h-6 w-6 shrink-0 items-center justify-center rounded-md',
-                'transition-all',
-                isSliceActive ? 'scale-105' : '',
+                ICON_WRAP_BASE_CLASS,
+                ICON_WRAP_TRANSITION_CLASS,
+                isSliceActive ? ACTIVE_ICON_SCALE_CLASS : '',
               )}
               style={`
                 background-color: color-mix(in srgb, ${slice.color} 10%, transparent);
@@ -98,7 +114,7 @@
                 'line-clamp-2 min-w-0 flex-1',
                 'font-mono text-[0.6875rem] break-words transition-colors',
               )}
-              style="font-weight: {isSliceActive ? 500 : 400};"
+              style="font-weight: {isSliceActive ? ACTIVE_FONT_WEIGHT : INACTIVE_FONT_WEIGHT};"
             >
               {slice.name}
             </span>
@@ -107,10 +123,10 @@
               <div
                 class="bar-grow h-full rounded-full"
                 style={`
-                  width: ${slice.percentage}%; 
-                  background-color: ${slice.color}; 
-                  opacity: ${isSliceActive ? 1 : 0.55}; 
-                  animation-delay: ${index * 20}ms;
+                  width: ${slice.percentage}%;
+                  background-color: ${slice.color};
+                  opacity: ${isSliceActive ? 1 : INACTIVE_BAR_OPACITY};
+                  animation-delay: ${index * BAR_ANIMATION_DELAY_STEP_MILLISECONDS}ms;
                 `}
               ></div>
             </div>
@@ -118,8 +134,10 @@
             <span
               class="w-7 shrink-0 text-right font-mono text-[0.625rem] transition-colors"
               style={`
-                color: ${isSliceActive ? slice.color : 'var(--muted)'}; 
-                font-weight: ${isSliceActive ? 600 : 400};
+                color: ${isSliceActive ? slice.color : 'var(--muted)'};
+                font-weight: ${
+                  isSliceActive ? ACTIVE_PERCENTAGE_FONT_WEIGHT : INACTIVE_FONT_WEIGHT
+                };
               `}
             >
               {slice.percentage}%
@@ -140,37 +158,25 @@
             type="button"
             class={cn(
               'flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1 text-left',
-              'transition-all duration-200',
-              isNodeActive ? 'translate-x-[1.5px]' : '',
+              ROW_TRANSITION_CLASS,
+              isNodeActive ? ACTIVE_ROW_TRANSLATE_CLASS : '',
             )}
-            style={`
-              background-color: ${
-                isNodeActive
-                  ? `color-mix(in srgb, ${node.languageColor} 12%, transparent)`
-                  : 'transparent'
-              };
-              color: ${isNodeActive ? node.languageColor : 'var(--text)'};
-              animation-delay: ${index * 30}ms;
-            `}
+            style={buildRowStyle(node.languageColor, isNodeActive, index)}
             onmouseenter={() => (hoveredIndex = index)}
             onmouseleave={() => (hoveredIndex = null)}
             onclick={() => window.open(node.url, '_blank')}
           >
             <span
               class={cn(
-                'flex h-6 w-6 shrink-0 items-center justify-center rounded-md',
-                'transition-all',
-                isNodeActive ? 'scale-105' : '',
+                ICON_WRAP_BASE_CLASS,
+                ICON_WRAP_TRANSITION_CLASS,
+                isNodeActive ? ACTIVE_ICON_SCALE_CLASS : '',
               )}
               style={`
-                background-color: color-mix(
-                  in srgb, 
-                  ${node.languageColor} 10%, 
-                  transparent
-                );
+                background-color: color-mix(in srgb, ${node.languageColor} 10%, transparent);
                 border: 1px solid color-mix(
-                  in srgb, 
-                  ${node.languageColor} ${isNodeActive ? '30%' : '10%'}, 
+                  in srgb,
+                  ${node.languageColor} ${isNodeActive ? '30%' : '10%'},
                   transparent
                 );
               `}
@@ -182,7 +188,7 @@
             <div class="flex min-w-0 flex-1 flex-col">
               <span
                 class="truncate font-mono text-[0.6875rem] font-medium transition-colors"
-                style="font-weight: {isNodeActive ? 500 : 400};"
+                style="font-weight: {isNodeActive ? ACTIVE_FONT_WEIGHT : INACTIVE_FONT_WEIGHT};"
               >
                 {node.name}
               </span>
@@ -194,7 +200,7 @@
             <span
               class="shrink-0 text-right font-mono text-[0.625rem] transition-colors"
               style={`
-                color: ${isNodeActive ? node.languageColor : 'var(--subtle)'};
+                color: ${isNodeActive ? node.languageColor : INACTIVE_SUBTLE_COLOR};
               `}
             >
               {node.relativeTimeLabel}
@@ -208,7 +214,7 @@
           Collaborators ({collaboratorNodes.length})
         </div>
 
-        <Tooltip.Provider delayDuration={200}>
+        <Tooltip.Provider delayDuration={COLLABORATOR_TOOLTIP_DELAY_MILLISECONDS}>
           {#each collaboratorNodes as node, index (node.login)}
             {@const isNodeActive = hoveredIndex === index}
 
@@ -219,17 +225,9 @@
                   class={cn(
                     'flex w-full cursor-pointer items-center gap-2 rounded-lg',
                     'px-2 py-1 text-left transition-all duration-200',
-                    isNodeActive ? 'translate-x-[1.5px]' : '',
+                    isNodeActive ? ACTIVE_ROW_TRANSLATE_CLASS : '',
                   )}
-                  style={`
-                    background-color: ${
-                      isNodeActive
-                        ? `color-mix(in srgb, ${node.accentColor} 12%, transparent)`
-                        : 'transparent'
-                    };
-                    color: ${isNodeActive ? node.accentColor : 'var(--text)'};
-                    animation-delay: ${index * 30}ms;
-                  `}
+                  style={buildRowStyle(node.accentColor, isNodeActive, index)}
                   onmouseenter={() => (hoveredIndex = index)}
                   onmouseleave={() => (hoveredIndex = null)}
                   onclick={() =>
@@ -242,7 +240,7 @@
                   <span
                     class={cn(
                       'h-6 w-6 shrink-0 overflow-hidden rounded-full border transition-all',
-                      isNodeActive ? 'scale-105' : '',
+                      isNodeActive ? ACTIVE_ICON_SCALE_CLASS : '',
                     )}
                     style={`
                       border-color: color-mix(
@@ -262,7 +260,9 @@
                   <div class="flex min-w-0 flex-1 flex-col">
                     <span
                       class="truncate font-mono text-[0.6875rem] font-medium transition-colors"
-                      style="font-weight: {isNodeActive ? 500 : 400};"
+                      style="font-weight: {isNodeActive
+                        ? ACTIVE_FONT_WEIGHT
+                        : INACTIVE_FONT_WEIGHT};"
                     >
                       {node.login}
                     </span>
@@ -278,7 +278,7 @@
 
                   <span
                     class="shrink-0 text-right font-mono text-[0.625rem] transition-colors"
-                    style={`color: ${isNodeActive ? node.accentColor : 'var(--subtle)'};`}
+                    style={`color: ${isNodeActive ? node.accentColor : INACTIVE_SUBTLE_COLOR};`}
                   >
                     {#if collaboratorSortMode === 'commits'}
                       {formatNumber(node.commits)}
@@ -292,7 +292,7 @@
 
               <Tooltip.Content
                 side="left"
-                sideOffset={8}
+                sideOffset={COLLABORATOR_TOOLTIP_SIDE_OFFSET}
                 class="flex max-w-[220px] flex-col items-start gap-1 text-left normal-case"
               >
                 <div class="text-muted text-[0.5625rem] tracking-wide uppercase">Shared repos</div>

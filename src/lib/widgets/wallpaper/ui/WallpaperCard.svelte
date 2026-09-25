@@ -20,8 +20,10 @@
     height: number
   } = $props()
 
+  const SCALE_UNITS_ACROSS_WIDTH = 100
+
   const isLandscape = $derived(width >= height)
-  const scaleUnit = $derived(width / 100)
+  const scaleUnit = $derived(width / SCALE_UNITS_ACROSS_WIDTH)
 </script>
 
 <svg {width} {height} viewBox="0 0 {width} {height}" fill="none" xmlns="http://www.w3.org/2000/svg">

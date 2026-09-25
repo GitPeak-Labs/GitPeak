@@ -31,27 +31,43 @@
 
   const BOTTOM_MARGIN = 20
   const DIVIDER_GAP = 24
+  const PANEL_PADDING_X = 24
 
   const LEGEND_FONT_SIZE = 12
   const LEGEND_ROW_HEIGHT = 28
-  // Second line of a wrapped language name — tighter than the row step so the pair reads
-  // as one entry.
-  const LEGEND_LINE_HEIGHT = 16
+  const LEGEND_WRAPPED_NAME_LINE_HEIGHT = 16
+  const LEGEND_DONUT_GAP = 24
+  const LEGEND_TEXT_INSET = 12
+  const LEGEND_ROW_BASELINE_OFFSET = 10
+  const LEGEND_DOT_OFFSET = 4
 
-  // Instrument Serif is proportional; 0.5em per glyph is a conservative average width, so a
-  // repo name line that passes this budget can't reach the panel's right padding.
+  const SERIF_AVERAGE_GLYPH_ADVANCE_EM = 0.5
   const REPO_NAME_FONT_SIZE = 22
   const REPO_NAME_LINE_HEIGHT = 26
-  const SERIF_ADVANCE_EM = 0.5
+  const REPO_NAME_HORIZONTAL_PADDING = 72
   const MAX_LEGEND_ROWS = 8
+
+  const DONUT_X_OFFSET = 24
+  const DONUT_Y_OFFSET = 64
+  const AVATAR_INNER_INSET = 4
+
+  const HEADER_LABEL_Y_OFFSET = 38
+  const USED_BADGE_RIGHT_OFFSET = 84
+  const USED_BADGE_Y_OFFSET = 22
+  const USED_BADGE_TEXT_RIGHT_OFFSET = 54
+  const USED_BADGE_TEXT_Y_OFFSET = 36
+
+  const TOP_REPO_BASE_HEIGHT = 74
+  const TOP_REPO_INNER_WIDTH_PADDING = 48
+
   const ACCENT_TOKENS = ACCENT_COLORS.map((cssVariable) => cssVariable.slice('var(--'.length, -1))
 
   const dimensions = getDimensions(true)
-  const donutX = $derived(x + 24)
-  const donutY = $derived(y + 64)
+  const donutX = $derived(x + DONUT_X_OFFSET)
+  const donutY = $derived(y + DONUT_Y_OFFSET)
   const centerX = $derived(donutX + dimensions.sizePixels / 2)
   const centerY = $derived(donutY + dimensions.sizePixels / 2)
-  const avatarRadius = dimensions.innerRadiusPixels - 4
+  const avatarRadius = dimensions.innerRadiusPixels - AVATAR_INNER_INSET
 
   const slices = $derived(
     buildPieSlices(languages)
@@ -62,36 +78,38 @@
       })),
   )
   const legendSlices = $derived(slices.slice(0, MAX_LEGEND_ROWS))
-  const legendX = $derived(donutX + dimensions.sizePixels + 24)
-  // From the name's left edge (past the color dot) to the percent label's right anchor.
-  const legendRowWidth = $derived(x + width - 24 - (legendX + 12))
-  // Long names ("Jupyter Notebook") wrap onto a second line instead of being cut, so each
-  // row carries its own vertical offset within the legend.
+  const legendX = $derived(donutX + dimensions.sizePixels + LEGEND_DONUT_GAP)
+  const legendRowAvailableWidth = $derived(
+    x + width - PANEL_PADDING_X - (legendX + LEGEND_TEXT_INSET),
+  )
   const legendEntries = $derived.by(() => {
     let offsetY = 0
     return legendSlices.map((slice) => {
       const percentage = Math.round(slice.percentage)
       const lines = wrapName(
         slice.name,
-        monoNameBudget(legendRowWidth, LEGEND_FONT_SIZE, percentage),
+        monoNameBudget(legendRowAvailableWidth, LEGEND_FONT_SIZE, percentage),
       )
       const entry = { ...slice, percentage, lines, offsetY }
-      offsetY += LEGEND_ROW_HEIGHT + (lines.length - 1) * LEGEND_LINE_HEIGHT
+      offsetY += LEGEND_ROW_HEIGHT + (lines.length - 1) * LEGEND_WRAPPED_NAME_LINE_HEIGHT
       return entry
     })
   })
 
-  // A long repo name wraps onto a second line rather than colliding with anything, so the
-  // block's height (and the divider above it) follows the wrapped line count.
   const repoNameLines = $derived(
     mostStarredRepo
       ? wrapName(
           mostStarredRepo.name,
-          Math.floor((width - 72) / (REPO_NAME_FONT_SIZE * SERIF_ADVANCE_EM)),
+          Math.floor(
+            (width - REPO_NAME_HORIZONTAL_PADDING) /
+              (REPO_NAME_FONT_SIZE * SERIF_AVERAGE_GLYPH_ADVANCE_EM),
+          ),
         )
       : [],
   )
-  const topRepoHeight = $derived(74 + repoNameLines.length * REPO_NAME_LINE_HEIGHT)
+  const topRepoHeight = $derived(
+    TOP_REPO_BASE_HEIGHT + repoNameLines.length * REPO_NAME_LINE_HEIGHT,
+  )
   const topRepoY = $derived(y + height - BOTTOM_MARGIN - topRepoHeight)
   const dividerY = $derived(topRepoY - DIVIDER_GAP)
 </script>
@@ -108,10 +126,10 @@
   stroke-opacity="0.15"
   filter="url(#glass-shadow)"
 />
-<text x={x + 24} y={y + 38} class="text-subtle">Languages</text>
+<text x={x + PANEL_PADDING_X} y={y + HEADER_LABEL_Y_OFFSET} class="text-subtle">Languages</text>
 <rect
-  x={x + width - 84}
-  y={y + 22}
+  x={x + width - USED_BADGE_RIGHT_OFFSET}
+  y={y + USED_BADGE_Y_OFFSET}
   width="60"
   height="20"
   rx="10"
@@ -121,8 +139,8 @@
   stroke-opacity="0.2"
 />
 <text
-  x={x + width - 54}
-  y={y + 36}
+  x={x + width - USED_BADGE_TEXT_RIGHT_OFFSET}
+  y={y + USED_BADGE_TEXT_Y_OFFSET}
   class="text-main"
   fill={theme.iris}
   font-size="10"
@@ -144,14 +162,14 @@
 {#if slices.length > 0}
   <g>
     {#each slices as slice (slice.name)}
-      {@const pathD = generateArcPath(
+      {@const pathD = generateArcPath({
         centerX,
         centerY,
-        dimensions.outerRadiusPixels,
-        dimensions.innerRadiusPixels,
-        slice.startAngleDegrees,
-        slice.endAngleDegrees,
-      )}
+        outerRadius: dimensions.outerRadiusPixels,
+        innerRadius: dimensions.innerRadiusPixels,
+        startAngle: slice.startAngleDegrees,
+        endAngle: slice.endAngleDegrees,
+      })}
       <path d={pathD} fill={slice.color} />
     {/each}
   </g>
@@ -181,14 +199,14 @@
 />
 
 {#each legendEntries as slice (slice.name)}
-  {@const rowY = donutY + slice.offsetY + 10}
+  {@const rowY = donutY + slice.offsetY + LEGEND_ROW_BASELINE_OFFSET}
 
   <g>
-    <circle cx={legendX} cy={rowY - 4} r="4" fill={slice.color} />
+    <circle cx={legendX} cy={rowY - LEGEND_DOT_OFFSET} r="4" fill={slice.color} />
     {#each slice.lines as line, lineIndex (lineIndex)}
       <text
-        x={legendX + 12}
-        y={rowY + lineIndex * LEGEND_LINE_HEIGHT}
+        x={legendX + LEGEND_TEXT_INSET}
+        y={rowY + lineIndex * LEGEND_WRAPPED_NAME_LINE_HEIGHT}
         class="text-main"
         font-size={LEGEND_FONT_SIZE}
       >
@@ -196,7 +214,7 @@
       </text>
     {/each}
     <text
-      x={x + width - 24}
+      x={x + width - PANEL_PADDING_X}
       y={rowY}
       class="text-main"
       font-size={LEGEND_FONT_SIZE}
@@ -211,8 +229,8 @@
 
 {#if mostStarredRepo}
   <line
-    x1={x + 24}
-    x2={x + width - 24}
+    x1={x + PANEL_PADDING_X}
+    x2={x + width - PANEL_PADDING_X}
     y1={dividerY}
     y2={dividerY}
     stroke={theme.subtle}
@@ -223,11 +241,11 @@
       repository={mostStarredRepo}
       nameLines={repoNameLines}
       {theme}
-      x={x + 24}
+      x={x + PANEL_PADDING_X}
       y={topRepoY}
-      width={width - 48}
+      width={width - TOP_REPO_INNER_WIDTH_PADDING}
       height={topRepoHeight}
-      nested
+      isNested
     />
   </g>
 {/if}

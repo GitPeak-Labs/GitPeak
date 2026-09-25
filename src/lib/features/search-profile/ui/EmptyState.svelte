@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { UserX, AlertCircle, WifiOff } from 'lucide-svelte'
+  import { UserX, CircleAlert, WifiOff } from 'lucide-svelte'
   import { cn } from '$lib/shared/lib/class-merger'
 
   let {
@@ -11,7 +11,8 @@
   } = $props()
 
   const isNetworkError = $derived(
-    error?.toLowerCase().includes('network') || error?.toLowerCase().includes('connection'),
+    (error?.toLowerCase().includes('network') ?? false) ||
+      (error?.toLowerCase().includes('connection') ?? false),
   )
   const isNotFound = $derived(!error || error.toLowerCase().includes('not found'))
 
@@ -37,7 +38,7 @@
     {:else if isNotFound}
       <UserX class="text-muted h-6 w-6" />
     {:else}
-      <AlertCircle class="text-gold h-6 w-6" />
+      <CircleAlert class="text-gold h-6 w-6" />
     {/if}
   </div>
   <div>

@@ -1,4 +1,4 @@
-export interface TiltState {
+export type TiltState = {
   rotateX: number
   rotateY: number
   active: boolean
@@ -35,11 +35,14 @@ export function tiltStyle(state: TiltState): string {
   return `transform: perspective(1000px) rotateX(${state.rotateX}deg) rotateY(${state.rotateY}deg)`
 }
 
+const HALF_TURN_DEGREES = 180
+const QUARTER_TURN_DEGREES = 90
+
 export function shineStyle(state: TiltState): string {
   if (!state.active) return 'opacity: 0'
 
   const angleRadians = Math.atan2(state.rotateX, state.rotateY)
-  const angleDegrees = (angleRadians * 180) / Math.PI + 90
+  const angleDegrees = (angleRadians * HALF_TURN_DEGREES) / Math.PI + QUARTER_TURN_DEGREES
 
   return [
     `background: linear-gradient(${angleDegrees}deg, `,

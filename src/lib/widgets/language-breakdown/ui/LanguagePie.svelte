@@ -1,28 +1,58 @@
 <script lang="ts">
+  import type { Component, Snippet } from 'svelte'
   import type {
     GitHubLanguage,
     InvolvedRepo,
     Collaborator,
   } from '$lib/entities/github-stats/model/github-stats'
-  import { useLanguagePie } from '../model/useLanguagePie.svelte'
+  import {
+    useLanguagePie,
+    buildToggleOptions,
+    OWNERSHIP_TOGGLE_SPECS,
+    COLLABORATOR_SORT_SPECS,
+    ALL_TAB_SPECS,
+    type ToggleOption,
+    type OwnershipFilter,
+    type CollaboratorSortMode,
+    type ViewMode,
+  } from '../model/useLanguagePie.svelte'
   import { calculateOrbitNodes } from '$lib/entities/github-stats/model/orbit-calculations'
   import {
     calculateCollaboratorOrbitNodes,
-    type CollaboratorSortMode,
+    type CollaboratorOrbitLayout,
   } from '$lib/entities/github-stats/model/collaborator-orbit-calculations'
   import LanguagePieChart from './LanguagePieChart.svelte'
   import RecencyOrbitChart from './RecencyOrbitChart.svelte'
-  import CollaboratorOrbitChart from '$lib/widgets/collaborator-orbit/ui/CollaboratorOrbitChart.svelte'
+  import { CollaboratorOrbitChart } from '$lib/widgets/collaborator-orbit'
   import ChartLegend from './ChartLegend.svelte'
 
   import { Card, CardContent, CardHeader } from '$lib/shared/ui/card'
   import { Tabs, TabsList, TabsTrigger } from '$lib/shared/ui/tabs'
   import * as Avatar from '$lib/shared/ui/avatar'
-  import { Orbit, Palette, Globe, User, Users, Handshake, GitCommit, Repeat2 } from 'lucide-svelte'
   import { fade, scale } from 'svelte/transition'
   import * as Tooltip from '$lib/shared/ui/tooltip'
 
   import { cn } from '$lib/shared/lib/class-merger'
+
+  const DEFAULT_THEME_COLOR = 'var(--iris)'
+  const BUTTON_INSET_PIXELS = 3.5
+  const TAB_ICON_SIZE = 10
+  const TOGGLE_ICON_SIZE = 11
+  const TOGGLE_TOOLTIP_SIDE_OFFSET = 8
+  const TOGGLE_BUTTON_BASE_CLASS =
+    'flex h-6 w-6 items-center justify-center rounded-full transition-all'
+  const TOGGLE_BUTTON_ACTIVE_CLASS = 'bg-iris/20 text-iris'
+  const TOGGLE_BUTTON_INACTIVE_CLASS = 'text-muted hover:text-subtle hover:bg-black/5'
+  const FLOATING_TOGGLE_WRAPPER_CLASS = cn(
+    'bg-base/80 border-subtle/10 absolute -bottom-16 left-1/2 hidden',
+    '-translate-x-1/2 items-center gap-0.5 rounded-full border p-1',
+    'shadow-lg backdrop-blur-md sm:flex',
+  )
+  const MOBILE_TOGGLE_WRAPPER_CLASS = cn(
+    'bg-base/80 border-subtle/10 flex items-center gap-0.5',
+    'rounded-full border p-1 shadow-lg backdrop-blur-md',
+  )
+  const TAB_TRIGGER_CLASS = 'h-6 px-1.5 font-mono text-[0.5625rem] sm:px-2.5'
 
   let {
     languages,
@@ -36,8 +66,8 @@
     collaborators?: Collaborator[]
   } = $props()
 
-  let viewMode = $state<'languages' | 'orbit' | 'collaborators'>('languages')
-  let ownershipFilter = $state<'all' | 'owned' | 'others'>('all')
+  let viewMode = $state<ViewMode>('languages')
+  let ownershipFilter = $state<OwnershipFilter>('all')
   let collaboratorSortMode = $state<CollaboratorSortMode>('commits')
   let hoveredIndex = $state<number | null>(null)
 
@@ -46,146 +76,108 @@
 
   const filteredRepos = $derived.by(() => {
     if (viewMode === 'languages') return involvedRepos
-    if (ownershipFilter === 'owned') return involvedRepos.filter((r) => r.isOwned)
-    if (ownershipFilter === 'others') return involvedRepos.filter((r) => !r.isOwned)
+    if (ownershipFilter === 'owned') return involvedRepos.filter((repo) => repo.isOwned)
+    if (ownershipFilter === 'others') return involvedRepos.filter((repo) => !repo.isOwned)
     return involvedRepos
   })
 
-  const orbitNodes = $derived(
-    calculateOrbitNodes(
-      filteredRepos,
-      languages,
-      pieManager.dimensions.centerX,
-      pieManager.dimensions.centerY,
-      pieManager.dimensions.innerRadiusPixels,
-      pieManager.dimensions.outerRadiusPixels,
-    ),
-  )
-
-  const collaboratorOrbitNodes = $derived(
-    calculateCollaboratorOrbitNodes(
-      collaborators,
-      pieManager.dimensions.centerX,
-      pieManager.dimensions.centerY,
-      pieManager.dimensions.innerRadiusPixels,
-      pieManager.dimensions.outerRadiusPixels,
-      collaboratorSortMode,
-    ),
-  )
-
-  const activeThemeColor = $derived.by(() => {
-    if (viewMode === 'orbit' && hoveredIndex !== null)
-      return orbitNodes[hoveredIndex]?.languageColor || 'var(--iris)'
-
-    if (viewMode === 'languages' && hoveredIndex !== null)
-      return pieManager.slices[hoveredIndex]?.color || 'var(--iris)'
-
-    if (viewMode === 'collaborators' && hoveredIndex !== null)
-      return collaboratorOrbitNodes[hoveredIndex]?.accentColor || 'var(--iris)'
-
-    return 'var(--iris)'
+  const orbitLayout = $derived<CollaboratorOrbitLayout>({
+    centerX: pieManager.dimensions.centerX,
+    centerY: pieManager.dimensions.centerY,
+    innerRadius: pieManager.dimensions.innerRadiusPixels,
+    outerRadius: pieManager.dimensions.outerRadiusPixels,
   })
 
-  const buttonSize = $derived((pieManager.dimensions.innerRadiusPixels - 3.5) * 2)
-  const buttonOffset = $derived((pieManager.dimensions.sizePixels - buttonSize) / 2)
+  const pieDimensionProps = $derived({
+    centerX: pieManager.dimensions.centerX,
+    centerY: pieManager.dimensions.centerY,
+    innerRadiusPixels: pieManager.dimensions.innerRadiusPixels,
+    outerRadiusPixels: pieManager.dimensions.outerRadiusPixels,
+  })
 
-  function cycleViewMode() {
+  const orbitNodes = $derived(calculateOrbitNodes(filteredRepos, languages, orbitLayout))
+
+  const collaboratorOrbitNodes = $derived(
+    calculateCollaboratorOrbitNodes(collaborators, orbitLayout, collaboratorSortMode),
+  )
+
+  const hoverColorSelectors: Record<typeof viewMode, (index: number) => string | undefined> = {
+    orbit: (index) => orbitNodes[index]?.languageColor,
+    languages: (index) => pieManager.slices[index]?.color,
+    collaborators: (index) => collaboratorOrbitNodes[index]?.accentColor,
+  }
+
+  const activeThemeColor = $derived(
+    hoveredIndex === null
+      ? DEFAULT_THEME_COLOR
+      : (hoverColorSelectors[viewMode](hoveredIndex) ?? DEFAULT_THEME_COLOR),
+  )
+
+  const buttonSize = $derived((pieManager.dimensions.innerRadiusPixels - BUTTON_INSET_PIXELS) * 2)
+  const buttonOffset = $derived((pieManager.dimensions.sizePixels - buttonSize) / 2)
+  const buttonStyle = $derived(
+    `width: ${buttonSize}px; height: ${buttonSize}px; ` +
+      `top: ${buttonOffset}px; left: ${buttonOffset}px;`,
+  )
+
+  const baselineRingRadius = $derived(
+    (pieManager.dimensions.outerRadiusPixels + pieManager.dimensions.innerRadiusPixels) / 2,
+  )
+  const baselineRingStrokeWidth = $derived(
+    pieManager.dimensions.outerRadiusPixels - pieManager.dimensions.innerRadiusPixels + 1,
+  )
+
+  function setOwnershipFilter(nextFilter: OwnershipFilter): void {
+    ownershipFilter = nextFilter
+  }
+
+  function setCollaboratorSortMode(nextSortMode: CollaboratorSortMode): void {
+    collaboratorSortMode = nextSortMode
+  }
+
+  const activeToggleOptions = $derived(
+    viewMode === 'orbit'
+      ? buildToggleOptions(OWNERSHIP_TOGGLE_SPECS, ownershipFilter, setOwnershipFilter)
+      : buildToggleOptions(COLLABORATOR_SORT_SPECS, collaboratorSortMode, setCollaboratorSortMode),
+  )
+
+  function cycleViewMode(): void {
     if (viewMode === 'languages') viewMode = 'orbit'
     else if (viewMode === 'orbit') viewMode = hasCollaborators ? 'collaborators' : 'languages'
     else viewMode = 'languages'
   }
+
+  function selectViewMode(nextViewMode: string): void {
+    viewMode = nextViewMode as typeof viewMode
+  }
+
+  const visibleTabSpecs = $derived(
+    ALL_TAB_SPECS.filter((tab) => hasCollaborators || tab.tabValue !== 'collaborators'),
+  )
 </script>
 
-{#snippet ownershipToggle()}
+{#snippet toggleGroup(toggleOptions: ToggleOption[])}
   <Tooltip.Provider delayDuration={0}>
-    <Tooltip.Root>
-      <Tooltip.Trigger>
-        <button
-          class={cn(
-            'flex h-6 w-6 items-center justify-center rounded-full transition-all',
-            ownershipFilter === 'all'
-              ? 'bg-iris/20 text-iris'
-              : 'text-muted hover:text-subtle hover:bg-black/5',
-          )}
-          onclick={() => (ownershipFilter = 'all')}
-        >
-          <Globe size={11} />
-        </button>
-      </Tooltip.Trigger>
-      <Tooltip.Content side="top" sideOffset={8}>All Repos</Tooltip.Content>
-    </Tooltip.Root>
-
-    <Tooltip.Root>
-      <Tooltip.Trigger>
-        <button
-          class={cn(
-            'flex h-6 w-6 items-center justify-center rounded-full transition-all',
-            ownershipFilter === 'owned'
-              ? 'bg-iris/20 text-iris'
-              : 'text-muted hover:text-subtle hover:bg-black/5',
-          )}
-          onclick={() => (ownershipFilter = 'owned')}
-        >
-          <User size={11} />
-        </button>
-      </Tooltip.Trigger>
-      <Tooltip.Content side="top" sideOffset={8}>My Repos</Tooltip.Content>
-    </Tooltip.Root>
-
-    <Tooltip.Root>
-      <Tooltip.Trigger>
-        <button
-          class={cn(
-            'flex h-6 w-6 items-center justify-center rounded-full transition-all',
-            ownershipFilter === 'others'
-              ? 'bg-iris/20 text-iris'
-              : 'text-muted hover:text-subtle hover:bg-black/5',
-          )}
-          onclick={() => (ownershipFilter = 'others')}
-        >
-          <Users size={11} />
-        </button>
-      </Tooltip.Trigger>
-      <Tooltip.Content side="top" sideOffset={8}>Contributions</Tooltip.Content>
-    </Tooltip.Root>
-  </Tooltip.Provider>
-{/snippet}
-
-{#snippet collaboratorSortToggle()}
-  <Tooltip.Provider delayDuration={0}>
-    <Tooltip.Root>
-      <Tooltip.Trigger>
-        <button
-          class={cn(
-            'flex h-6 w-6 items-center justify-center rounded-full transition-all',
-            collaboratorSortMode === 'commits'
-              ? 'bg-iris/20 text-iris'
-              : 'text-muted hover:text-subtle hover:bg-black/5',
-          )}
-          onclick={() => (collaboratorSortMode = 'commits')}
-        >
-          <GitCommit size={11} />
-        </button>
-      </Tooltip.Trigger>
-      <Tooltip.Content side="top" sideOffset={8}>Sort by Commits</Tooltip.Content>
-    </Tooltip.Root>
-
-    <Tooltip.Root>
-      <Tooltip.Trigger>
-        <button
-          class={cn(
-            'flex h-6 w-6 items-center justify-center rounded-full transition-all',
-            collaboratorSortMode === 'frequency'
-              ? 'bg-iris/20 text-iris'
-              : 'text-muted hover:text-subtle hover:bg-black/5',
-          )}
-          onclick={() => (collaboratorSortMode = 'frequency')}
-        >
-          <Repeat2 size={11} />
-        </button>
-      </Tooltip.Trigger>
-      <Tooltip.Content side="top" sideOffset={8}>Sort by Collab Frequency</Tooltip.Content>
-    </Tooltip.Root>
+    {#each toggleOptions as option (option.tooltipLabel)}
+      {@const OptionIcon = option.Icon as Component}
+      <Tooltip.Root>
+        <Tooltip.Trigger>
+          <button
+            type="button"
+            class={cn(
+              TOGGLE_BUTTON_BASE_CLASS,
+              option.isActive ? TOGGLE_BUTTON_ACTIVE_CLASS : TOGGLE_BUTTON_INACTIVE_CLASS,
+            )}
+            onclick={option.onToggle}
+          >
+            <OptionIcon size={TOGGLE_ICON_SIZE} />
+          </button>
+        </Tooltip.Trigger>
+        <Tooltip.Content side="top" sideOffset={TOGGLE_TOOLTIP_SIDE_OFFSET}>
+          {option.tooltipLabel}
+        </Tooltip.Content>
+      </Tooltip.Root>
+    {/each}
   </Tooltip.Provider>
 {/snippet}
 
@@ -202,29 +194,15 @@
             : 'Collaborators'}
       </span>
 
-      <Tabs
-        value={viewMode}
-        onValueChange={(value) => (viewMode = value as typeof viewMode)}
-        class="min-w-0"
-      >
+      <Tabs value={viewMode} onValueChange={selectViewMode} class="min-w-0">
         <TabsList class="h-7 min-w-0 rounded-lg bg-black/10 p-0.5">
-          <TabsTrigger value="languages" class="h-6 px-1.5 font-mono text-[0.5625rem] sm:px-2.5">
-            <Palette size={10} class="mr-1" />
-            Lang
-          </TabsTrigger>
-          <TabsTrigger value="orbit" class="h-6 px-1.5 font-mono text-[0.5625rem] sm:px-2.5">
-            <Orbit size={10} class="mr-1" />
-            Orbit
-          </TabsTrigger>
-          {#if hasCollaborators}
-            <TabsTrigger
-              value="collaborators"
-              class="h-6 px-1.5 font-mono text-[0.5625rem] sm:px-2.5"
-            >
-              <Handshake size={10} class="mr-1" />
-              Collab
+          {#each visibleTabSpecs as tab (tab.tabValue)}
+            {@const TabIcon = tab.Icon as Component}
+            <TabsTrigger value={tab.tabValue} class={TAB_TRIGGER_CLASS}>
+              <TabIcon size={TAB_ICON_SIZE} class="mr-1" />
+              {tab.label}
             </TabsTrigger>
-          {/if}
+          {/each}
         </TabsList>
       </Tabs>
     </div>
@@ -245,45 +223,28 @@
           height={pieManager.dimensions.sizePixels}
           class="pointer-events-auto absolute inset-0 overflow-visible"
         >
-          <!-- Baseline Ring -->
           <circle
             cx={pieManager.dimensions.centerX}
             cy={pieManager.dimensions.centerY}
-            r={(pieManager.dimensions.outerRadiusPixels + pieManager.dimensions.innerRadiusPixels) /
-              2}
+            r={baselineRingRadius}
             fill="none"
             class="stroke-subtle/5"
-            stroke-width={pieManager.dimensions.outerRadiusPixels -
-              pieManager.dimensions.innerRadiusPixels +
-              1}
+            stroke-width={baselineRingStrokeWidth}
           />
 
           {#if viewMode === 'languages'}
             <LanguagePieChart
               animatedSlices={pieManager.animatedSlices}
               bind:hoveredIndex
-              centerX={pieManager.dimensions.centerX}
-              centerY={pieManager.dimensions.centerY}
-              innerRadiusPixels={pieManager.dimensions.innerRadiusPixels}
-              outerRadiusPixels={pieManager.dimensions.outerRadiusPixels}
+              {...pieDimensionProps}
             />
           {:else if viewMode === 'orbit'}
-            <RecencyOrbitChart
-              {orbitNodes}
-              bind:hoveredIndex
-              centerX={pieManager.dimensions.centerX}
-              centerY={pieManager.dimensions.centerY}
-              innerRadiusPixels={pieManager.dimensions.innerRadiusPixels}
-              outerRadiusPixels={pieManager.dimensions.outerRadiusPixels}
-            />
+            <RecencyOrbitChart {orbitNodes} bind:hoveredIndex {...pieDimensionProps} />
           {:else}
             <CollaboratorOrbitChart
               orbitNodes={collaboratorOrbitNodes}
               bind:hoveredIndex
-              centerX={pieManager.dimensions.centerX}
-              centerY={pieManager.dimensions.centerY}
-              innerRadiusPixels={pieManager.dimensions.innerRadiusPixels}
-              outerRadiusPixels={pieManager.dimensions.outerRadiusPixels}
+              {...pieDimensionProps}
             />
           {/if}
 
@@ -308,12 +269,7 @@
             'justify-center overflow-hidden rounded-full border-none',
             'shadow-md transition-transform outline-none active:scale-95',
           )}
-          style={`
-            width: ${buttonSize}px; 
-            height: ${buttonSize}px; 
-            top: ${buttonOffset}px; 
-            left: ${buttonOffset}px;
-          `}
+          style={buttonStyle}
         >
           <Avatar.Root
             class="absolute inset-0 h-full w-full transition-all
@@ -326,51 +282,20 @@
           </Avatar.Root>
         </button>
 
-        {#if viewMode === 'orbit'}
+        {#if viewMode !== 'languages'}
           <div
             transition:scale={{ duration: 250, start: 0.9 }}
-            class={cn(
-              'bg-base/80 border-subtle/10 absolute -bottom-16 left-1/2 hidden',
-              '-translate-x-1/2 items-center gap-0.5 rounded-full border p-1',
-              'shadow-lg backdrop-blur-md sm:flex',
-            )}
+            class={FLOATING_TOGGLE_WRAPPER_CLASS}
           >
-            {@render ownershipToggle()}
-          </div>
-        {:else if viewMode === 'collaborators'}
-          <div
-            transition:scale={{ duration: 250, start: 0.9 }}
-            class={cn(
-              'bg-base/80 border-subtle/10 absolute -bottom-16 left-1/2 hidden',
-              '-translate-x-1/2 items-center gap-0.5 rounded-full border p-1',
-              'shadow-lg backdrop-blur-md sm:flex',
-            )}
-          >
-            {@render collaboratorSortToggle()}
+            {@render (toggleGroup as Snippet<[ToggleOption[]]>)(activeToggleOptions)}
           </div>
         {/if}
       </div>
 
-      {#if viewMode === 'orbit'}
+      {#if viewMode !== 'languages'}
         <div class="flex sm:hidden" transition:fade={{ duration: 200 }}>
-          <div
-            class={cn(
-              'bg-base/80 border-subtle/10 flex items-center gap-0.5',
-              'rounded-full border p-1 shadow-lg backdrop-blur-md',
-            )}
-          >
-            {@render ownershipToggle()}
-          </div>
-        </div>
-      {:else if viewMode === 'collaborators'}
-        <div class="flex sm:hidden" transition:fade={{ duration: 200 }}>
-          <div
-            class={cn(
-              'bg-base/80 border-subtle/10 flex items-center gap-0.5',
-              'rounded-full border p-1 shadow-lg backdrop-blur-md',
-            )}
-          >
-            {@render collaboratorSortToggle()}
+          <div class={MOBILE_TOGGLE_WRAPPER_CLASS}>
+            {@render (toggleGroup as Snippet<[ToggleOption[]]>)(activeToggleOptions)}
           </div>
         </div>
       {/if}

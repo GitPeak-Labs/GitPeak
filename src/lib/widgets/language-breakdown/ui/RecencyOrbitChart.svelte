@@ -1,6 +1,12 @@
 <script lang="ts">
   import type { OrbitNode } from '$lib/entities/github-stats/model/orbit-calculations'
 
+  const INNER_RING_OFFSET_PIXELS = 10
+  const MIDDLE_RING_OFFSET_PIXELS = 5
+  const OUTER_RING_OFFSET_PIXELS = 12
+  const ACTIVE_HALO_FILL_OPACITY = 0.3
+  const INACTIVE_HALO_FILL_OPACITY = 0.1
+
   let {
     orbitNodes,
     hoveredIndex = $bindable(),
@@ -22,21 +28,21 @@
   <circle
     cx={centerX}
     cy={centerY}
-    r={innerRadiusPixels + 10}
+    r={innerRadiusPixels + INNER_RING_OFFSET_PIXELS}
     class="stroke-subtle/10 fill-none"
     stroke-dasharray="2 3"
   />
   <circle
     cx={centerX}
     cy={centerY}
-    r={(innerRadiusPixels + outerRadiusPixels) / 2 + 5}
+    r={(innerRadiusPixels + outerRadiusPixels) / 2 + MIDDLE_RING_OFFSET_PIXELS}
     class="stroke-subtle/5 fill-none"
     stroke-dasharray="2 3"
   />
   <circle
     cx={centerX}
     cy={centerY}
-    r={outerRadiusPixels + 12}
+    r={outerRadiusPixels + OUTER_RING_OFFSET_PIXELS}
     class="stroke-subtle/5 fill-none"
     stroke-dasharray="2 3"
   />
@@ -87,7 +93,7 @@
         r={isHovered ? node.haloSizePixels + 2 : node.haloSizePixels}
         fill={node.languageColor}
         class="transition-all duration-200"
-        fill-opacity={isHovered ? 0.3 : 0.1}
+        fill-opacity={isHovered ? ACTIVE_HALO_FILL_OPACITY : INACTIVE_HALO_FILL_OPACITY}
       />
       <circle
         cx={node.positionX}

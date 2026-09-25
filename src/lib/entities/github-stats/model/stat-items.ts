@@ -11,24 +11,24 @@ import type { GithubStats } from './github-stats'
 
 export type StatItem = {
   label: string
-  value: number
+  count: number
   icon: unknown
   accentVar: string
 }
 
 export function heroItems(stats: GithubStats): StatItem[] {
   return [
-    { label: 'Contributions', value: stats.totalContributions, icon: Activity, accentVar: 'foam' },
-    { label: 'Commits', value: stats.totalCommits, icon: GitCommitHorizontal, accentVar: 'iris' },
+    { label: 'Contributions', count: stats.totalContributions, icon: Activity, accentVar: 'foam' },
+    { label: 'Commits', count: stats.totalCommits, icon: GitCommitHorizontal, accentVar: 'iris' },
   ]
 }
 
 export function detailItems(stats: GithubStats): StatItem[] {
   return [
-    { label: 'Stars', value: stats.totalStars, icon: Star, accentVar: 'gold' },
-    { label: 'Repos', value: stats.totalRepos, icon: BookOpen, accentVar: 'iris' },
-    { label: 'Followers', value: stats.followers, icon: Users, accentVar: 'rose' },
-    { label: 'PRs', value: stats.totalPrs, icon: GitPullRequest, accentVar: 'love' },
-    { label: 'Issues', value: stats.totalIssues, icon: CircleDot, accentVar: 'gold' },
+    { label: 'Stars', count: stats.totalStars, icon: Star, accentVar: 'gold' },
+    { label: 'Repos', count: stats.totalRepos, icon: BookOpen, accentVar: 'iris' },
+    { label: 'Followers', count: stats.followers, icon: Users, accentVar: 'rose' },
+    { label: 'PRs', count: stats.totalPrs, icon: GitPullRequest, accentVar: 'love' },
+    { label: 'Issues', count: stats.totalIssues, icon: CircleDot, accentVar: 'gold' },
   ]
 }

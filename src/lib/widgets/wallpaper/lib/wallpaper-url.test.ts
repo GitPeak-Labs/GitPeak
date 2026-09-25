@@ -1,12 +1,14 @@
 import { describe, expect, test } from 'bun:test'
-import { WALLPAPER_FORMATS } from './wallpaper-formats'
+import { ALLOWED_WALLPAPER_FORMATS } from './wallpaper-formats'
 import { buildWallpaperUrl, withAvatarSizeHint } from './wallpaper-url'
 
-const desktop = WALLPAPER_FORMATS[0]
+const desktop = ALLOWED_WALLPAPER_FORMATS[0]
 
 describe('buildWallpaperUrl', () => {
   test('encodes the username and passes the preset name by name', () => {
-    const url = new URL(`https://gitpeak.test${buildWallpaperUrl('a b', desktop, 'Rosé Pine')}`)
+    const url = new URL(
+      `https://gitpeak.test${buildWallpaperUrl({ username: 'a b', format: desktop, presetName: 'Rosé Pine' })}`,
+    )
 
     expect(url.pathname).toBe('/wallpaper')
     expect(url.searchParams.get('username')).toBe('a b')
@@ -17,7 +19,7 @@ describe('buildWallpaperUrl', () => {
 
   test('sends packed custom tokens instead of a preset name when provided', () => {
     const url = new URL(
-      `https://gitpeak.test${buildWallpaperUrl('octocat', desktop, 'Rosé Pine', '191724-1f1d2e')}`,
+      `https://gitpeak.test${buildWallpaperUrl({ username: 'octocat', format: desktop, presetName: 'Rosé Pine', packedCustomTokens: '191724-1f1d2e' })}`,
     )
 
     expect(url.searchParams.get('t')).toBe('191724-1f1d2e')
@@ -25,7 +27,9 @@ describe('buildWallpaperUrl', () => {
   })
 
   test('falls back to the default preset when the preset name is null', () => {
-    const url = new URL(`https://gitpeak.test${buildWallpaperUrl('octocat', desktop, null)}`)
+    const url = new URL(
+      `https://gitpeak.test${buildWallpaperUrl({ username: 'octocat', format: desktop, presetName: null })}`,
+    )
 
     expect(url.searchParams.get('theme')).toBe('Rosé Pine')
   })

@@ -2,28 +2,40 @@ import { createQuery } from '@tanstack/svelte-query'
 import { createGithubClient } from '$lib/entities/github-stats/api/github-client'
 import { GHFETCH_STATS_URL } from '$lib/entities/github-stats/api/config'
 import { warmServerStats } from '$lib/entities/github-stats/api/warm-server-stats'
+import type { GithubStats } from '$lib/entities/github-stats/model/github-stats'
 
 const STATS_REQUEST_TIMEOUT_MILLISECONDS = 8000
-const STATS_STALE_TIME_MILLISECONDS = 60 * 1000
+const SECONDS_PER_MINUTE = 60
+const MILLISECONDS_PER_SECOND = 1000
+const STATS_STALE_TIME_MILLISECONDS = SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 
 const client = createGithubClient({
   apiUrl: GHFETCH_STATS_URL,
   requestTimeoutMilliseconds: STATS_REQUEST_TIMEOUT_MILLISECONDS,
 })
 
-export function useSearch() {
+type UseSearchApi = {
+  readonly currentUsername: string
+  readonly loading: boolean
+  readonly error: string | null
+  readonly stats: GithubStats | null
+  readonly noResults: boolean
+  onSearch: (username: string) => void
+}
+
+export function useSearch(): UseSearchApi {
   let currentUsername = $state('')
 
   const query = createQuery(() => ({
     queryKey: ['github-stats', currentUsername],
     queryFn: async () => {
-      const result = await client.fetchStats(currentUsername)
+      const statsResult = await client.fetchStats(currentUsername)
 
-      if (!result.ok) throw new Error(result.error.message)
+      if (!statsResult.ok) throw new Error(statsResult.error.message)
 
-      warmServerStats(currentUsername, result.value)
+      warmServerStats(currentUsername, statsResult.data)
 
-      return result.value
+      return statsResult.data
     },
     enabled: currentUsername.length > 0,
     staleTime: STATS_STALE_TIME_MILLISECONDS,
@@ -33,7 +45,7 @@ export function useSearch() {
     if (!username) return
 
     if (currentUsername === username) {
-      query.refetch()
+      void query.refetch()
     } else {
       currentUsername = username
     }

@@ -4,6 +4,8 @@
   import { heroItems, detailItems } from '$lib/entities/github-stats/model/stat-items'
   import StatCard from './StatCard.svelte'
 
+  const DETAIL_INDEX_OFFSET = 2
+
   let { statistics }: { statistics: GithubStats } = $props()
   const gridManager = useStatGrid()
 
@@ -18,32 +20,44 @@
 
 <div class="flex flex-col gap-3">
   <div class="grid grid-cols-2 gap-3">
-    {#each heroItems(statistics) as item, index (item.label)}
+    {#each heroItems(statistics) as statItem, index (statItem.label)}
       <StatCard
-        {item}
+        {statItem}
         tiltState={gridManager.tilts[index]}
         {index}
         {isTouchDevice}
         variant="hero"
-        onEnter={(e) => gridManager.onEnter(e, index)}
-        onMove={(e) => gridManager.onMove(e, index)}
-        onLeave={(e) => gridManager.onLeave(e, index)}
+        onEnter={(pointerEvent: MouseEvent) => {
+          gridManager.onEnter(pointerEvent, index)
+        }}
+        onMove={(pointerEvent: MouseEvent) => {
+          gridManager.onMove(pointerEvent, index)
+        }}
+        onLeave={(pointerEvent: MouseEvent) => {
+          gridManager.onLeave(pointerEvent, index)
+        }}
       />
     {/each}
   </div>
 
   <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5">
-    {#each detailItems(statistics) as item, index (item.label)}
-      {@const detailIndex = index + 2}
+    {#each detailItems(statistics) as statItem, index (statItem.label)}
+      {@const detailIndex = index + DETAIL_INDEX_OFFSET}
       <StatCard
-        {item}
+        {statItem}
         tiltState={gridManager.tilts[detailIndex]}
         index={detailIndex}
         {isTouchDevice}
         variant="detail"
-        onEnter={(e) => gridManager.onEnter(e, detailIndex)}
-        onMove={(e) => gridManager.onMove(e, detailIndex)}
-        onLeave={(e) => gridManager.onLeave(e, detailIndex)}
+        onEnter={(pointerEvent: MouseEvent) => {
+          gridManager.onEnter(pointerEvent, detailIndex)
+        }}
+        onMove={(pointerEvent: MouseEvent) => {
+          gridManager.onMove(pointerEvent, detailIndex)
+        }}
+        onLeave={(pointerEvent: MouseEvent) => {
+          gridManager.onLeave(pointerEvent, detailIndex)
+        }}
       />
     {/each}
   </div>

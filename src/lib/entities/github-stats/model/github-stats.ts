@@ -1,12 +1,12 @@
 import { z } from 'zod'
 
-export const gitHubLanguageSchema = z.object({
+const gitHubLanguageSchema = z.object({
   name: z.string(),
   percentage: z.number(),
   color: z.string().optional(),
 })
 
-export const involvedRepoSchema = z.object({
+const involvedRepoSchema = z.object({
   owner: z.string(),
   name: z.string(),
   primaryLanguage: z.string().nullable(),
@@ -16,13 +16,13 @@ export const involvedRepoSchema = z.object({
   stars: z.number(),
 })
 
-export const mostStarredRepoSchema = z.object({
+const mostStarredRepoSchema = z.object({
   name: z.string(),
   stars: z.number(),
   url: z.string(),
 })
 
-export const collaboratorRepoSchema = z.object({
+const collaboratorRepoSchema = z.object({
   name: z.string(),
   owner: z.string(),
   url: z.string(),
@@ -30,7 +30,7 @@ export const collaboratorRepoSchema = z.object({
   lastActivityAt: z.string(),
 })
 
-export const collaboratorSchema = z.object({
+const collaboratorSchema = z.object({
   login: z.string(),
   avatarUrl: z.string(),
   sharedRepos: z.number(),
@@ -60,6 +60,5 @@ export const githubStatsSchema = z.object({
 export type GitHubLanguage = z.infer<typeof gitHubLanguageSchema>
 export type InvolvedRepo = z.infer<typeof involvedRepoSchema>
 export type MostStarredRepo = z.infer<typeof mostStarredRepoSchema>
-export type CollaboratorRepo = z.infer<typeof collaboratorRepoSchema>
 export type Collaborator = z.infer<typeof collaboratorSchema>
 export type GithubStats = z.infer<typeof githubStatsSchema>

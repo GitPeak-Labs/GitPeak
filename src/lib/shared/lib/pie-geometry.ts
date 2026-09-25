@@ -1,6 +1,7 @@
 import { pickAccentColor } from './accent-cycle'
+import { startOffsets } from './start-offsets'
 
-export interface ProportionDatum {
+export type ProportionDatum = {
   name: string
   percentage: number
 }
@@ -12,93 +13,114 @@ export type PieSlice = ProportionDatum & {
   midAngleDegrees: number
 }
 
-const GAP_DEGREES = 1.8
-const PUSH_PIXELS = 7
-
-export function getDimensions(isMobileDevice: boolean) {
-  const sizePixels = isMobileDevice ? 160 : 200
-  const outerRadiusPixels = isMobileDevice ? 75 : 90
-  const innerRadiusPixels = isMobileDevice ? 48 : 57
-
-  return {
-    sizePixels,
-    centerX: sizePixels / 2,
-    centerY: sizePixels / 2,
-    outerRadiusPixels,
-    innerRadiusPixels,
-  }
+type PieDimensions = {
+  sizePixels: number
+  centerX: number
+  centerY: number
+  outerRadiusPixels: number
+  innerRadiusPixels: number
 }
 
-export function polarToCoordinates(
-  centerX: number,
-  centerY: number,
-  radius: number,
-  degrees: number,
-) {
-  const radians = (degrees * Math.PI) / 180
+type PolarPoint = {
+  centerX: number
+  centerY: number
+  radius: number
+  degrees: number
+}
 
+type CartesianPoint = {
+  positionX: number
+  positionY: number
+}
+
+type ArcSegment = {
+  centerX: number
+  centerY: number
+  outerRadius: number
+  innerRadius: number
+  startAngle: number
+  endAngle: number
+  offsetX?: number
+  offsetY?: number
+}
+
+const GAP_DEGREES = 1.8
+const PUSH_PIXELS = 7
+const HALF_TURN_DEGREES = 180
+const FULL_TURN_DEGREES = 360
+const TWELVE_O_CLOCK_DEGREES = -90
+const PERCENT_SCALE = 100
+
+const MOBILE_SIZES = { sizePixels: 160, outerRadiusPixels: 75, innerRadiusPixels: 48 }
+const DESKTOP_SIZES = { sizePixels: 200, outerRadiusPixels: 90, innerRadiusPixels: 57 }
+
+function toRadians(degrees: number): number {
+  return (degrees * Math.PI) / HALF_TURN_DEGREES
+}
+
+export function getDimensions(isMobileDevice: boolean): PieDimensions {
+  const sizes = isMobileDevice ? MOBILE_SIZES : DESKTOP_SIZES
+  return { ...sizes, centerX: sizes.sizePixels / 2, centerY: sizes.sizePixels / 2 }
+}
+
+export function polarToCoordinates({
+  centerX,
+  centerY,
+  radius,
+  degrees,
+}: PolarPoint): CartesianPoint {
+  const radians = toRadians(degrees)
   return {
     positionX: centerX + radius * Math.cos(radians),
     positionY: centerY + radius * Math.sin(radians),
   }
 }
 
-export function generateArcPath(
-  centerX: number,
-  centerY: number,
-  outerRadius: number,
-  innerRadius: number,
-  startAngle: number,
-  endAngle: number,
-  offsetX = 0,
-  offsetY = 0,
-): string {
-  const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0
-  const outerStart = polarToCoordinates(centerX, centerY, outerRadius, startAngle)
-  const outerEnd = polarToCoordinates(centerX, centerY, outerRadius, endAngle)
-  const innerStart = polarToCoordinates(centerX, centerY, innerRadius, endAngle)
-  const innerEnd = polarToCoordinates(centerX, centerY, innerRadius, startAngle)
+export function generateArcPath(segment: ArcSegment): string {
+  const { centerX, centerY, outerRadius, innerRadius, startAngle, endAngle } = segment
+  const offsetX = segment.offsetX ?? 0
+  const offsetY = segment.offsetY ?? 0
+  const largeArcFlag = endAngle - startAngle > HALF_TURN_DEGREES ? 1 : 0
+  const pointAt = (radius: number, degrees: number): string => {
+    const point = polarToCoordinates({ centerX, centerY, radius, degrees })
+    return `${point.positionX + offsetX} ${point.positionY + offsetY}`
+  }
 
   return [
-    `M ${outerStart.positionX + offsetX} ${outerStart.positionY + offsetY}`,
-    `A ${outerRadius} ${outerRadius}
-    0 ${largeArcFlag} 1 ${outerEnd.positionX + offsetX} ${outerEnd.positionY + offsetY}`,
-    `L ${innerStart.positionX + offsetX} ${innerStart.positionY + offsetY}`,
-    `A ${innerRadius} ${innerRadius}
-    0 ${largeArcFlag} 0 ${innerEnd.positionX + offsetX} ${innerEnd.positionY + offsetY}`,
+    `M ${pointAt(outerRadius, startAngle)}`,
+    `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${pointAt(outerRadius, endAngle)}`,
+    `L ${pointAt(innerRadius, endAngle)}`,
+    `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${pointAt(innerRadius, startAngle)}`,
     'Z',
   ].join(' ')
 }
 
 export function calculateSegmentOffset(slice: PieSlice): { offsetX: number; offsetY: number } {
-  const radians = (slice.midAngleDegrees * Math.PI) / 180
-
+  const radians = toRadians(slice.midAngleDegrees)
   return {
     offsetX: Math.cos(radians) * PUSH_PIXELS,
     offsetY: Math.sin(radians) * PUSH_PIXELS,
   }
 }
 
-export function buildPieSlices(items: ProportionDatum[]): PieSlice[] {
-  if (!items?.length) return []
+export function buildPieSlices(proportions: ProportionDatum[]): PieSlice[] {
+  const spansDegrees = proportions.map(
+    (proportion) => (proportion.percentage / PERCENT_SCALE) * FULL_TURN_DEGREES,
+  )
+  const sliceStartsDegrees = startOffsets(spansDegrees).map(
+    (offset) => TWELVE_O_CLOCK_DEGREES + offset,
+  )
 
-  let cursorDegrees = -90
-
-  return items.map((item, index) => {
-    const spanDegrees = (item.percentage / 100) * 360
-    const startAngleDegrees = cursorDegrees + GAP_DEGREES / 2
-    const endAngleDegrees = cursorDegrees + spanDegrees - GAP_DEGREES / 2
-    const midAngleDegrees = cursorDegrees + spanDegrees / 2
-
-    cursorDegrees += spanDegrees
-
+  return proportions.map((proportion, index) => {
+    const sliceStart = sliceStartsDegrees[index]
+    const spanDegrees = spansDegrees[index]
     return {
-      name: item.name,
-      percentage: item.percentage,
+      name: proportion.name,
+      percentage: proportion.percentage,
       color: pickAccentColor(index),
-      startAngleDegrees,
-      endAngleDegrees,
-      midAngleDegrees,
+      startAngleDegrees: sliceStart + GAP_DEGREES / 2,
+      endAngleDegrees: sliceStart + spanDegrees - GAP_DEGREES / 2,
+      midAngleDegrees: sliceStart + spanDegrees / 2,
     }
   })
 }

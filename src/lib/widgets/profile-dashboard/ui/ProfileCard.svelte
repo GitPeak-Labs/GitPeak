@@ -8,6 +8,9 @@
   import { Separator } from '$lib/shared/ui/separator'
   import { cn } from '$lib/shared/lib/class-merger'
 
+  const TINY_ICON_SIZE = 9
+  const FOAM_TINT_BG_CLASS = 'bg-[color-mix(in_srgb,var(--foam)_10%,transparent)]'
+
   let { statistics, login }: { statistics: GithubStats; login: string } = $props()
 
   let displayName = $derived(statistics.displayName || login)
@@ -18,11 +21,12 @@
     'glass relative isolate overflow-hidden rounded-2xl [clip-path:inset(0_round_1rem)]',
     'transition-[border-color,box-shadow,transform] duration-180 ease-out hover:-translate-y-px',
   )}
-  style="clip-path: inset(0 round 1rem); -webkit-clip-path: inset(0 round 1rem);"
 >
   <div
-    class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl [clip-path:inset(0_round_1rem)]"
-    style="clip-path: inset(0 round 1rem); -webkit-clip-path: inset(0 round 1rem);"
+    class={cn(
+      'pointer-events-none absolute inset-0 overflow-hidden rounded-2xl',
+      '[clip-path:inset(0_round_1rem)]',
+    )}
     aria-hidden="true"
   >
     <div
@@ -32,14 +36,10 @@
       )}
     ></div>
     <div
-      class={cn(
-        'bg-[color-mix(in_srgb,var(--foam)_10%,transparent)]',
-        'absolute -top-8 -right-8 h-28 w-28 rounded-full blur-2xl',
-      )}
+      class={cn(FOAM_TINT_BG_CLASS, 'absolute -top-8 -right-8 h-28 w-28 rounded-full blur-2xl')}
     ></div>
   </div>
 
-  <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
   <a
     href="https://github.com/{login}"
     target="_blank"
@@ -82,13 +82,13 @@
           <Badge
             variant="outline"
             class={cn(
-              'bg-[color-mix(in_srgb,var(--foam)_10%,transparent)]',
+              FOAM_TINT_BG_CLASS,
               'border-[color-mix(in_srgb,var(--foam)_20%,transparent)]',
               'flex shrink-0 items-center gap-1 px-2 py-1 text-(--foam)',
               'font-mono text-[0.625rem]',
             )}
           >
-            <Calendar size={9} />
+            <Calendar size={TINY_ICON_SIZE} />
             {accountAge(statistics.accountCreatedAt)}
           </Badge>
         </div>
@@ -110,12 +110,12 @@
           >
             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-(--foam)" aria-hidden="true"></span>
             <span class="truncate">github.com/{login}</span>
-            <ExternalLink size={9} class="shrink-0" aria-hidden="true" />
+            <ExternalLink size={TINY_ICON_SIZE} class="shrink-0" aria-hidden="true" />
           </span>
 
           <div class="flex shrink-0 items-center gap-3 font-mono text-[0.625rem] text-(--subtle)">
             <span class="flex items-center gap-1">
-              <Users size={9} aria-hidden="true" />
+              <Users size={TINY_ICON_SIZE} aria-hidden="true" />
               <span class="font-medium text-(--text)">
                 {formatNumber(statistics.followers)}
               </span>

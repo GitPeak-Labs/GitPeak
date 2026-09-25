@@ -32,7 +32,7 @@ describe('buildPieSlices', () => {
 
 describe('polarToCoordinates', () => {
   test('maps 0° to the point directly right of centre', () => {
-    const point = polarToCoordinates(100, 100, 50, 0)
+    const point = polarToCoordinates({ centerX: 100, centerY: 100, radius: 50, degrees: 0 })
 
     expect(point.positionX).toBeCloseTo(150)
     expect(point.positionY).toBeCloseTo(100)
@@ -41,7 +41,14 @@ describe('polarToCoordinates', () => {
 
 describe('generateArcPath', () => {
   test('produces a closed donut-segment path', () => {
-    const path = generateArcPath(100, 100, 90, 60, -90, 0)
+    const path = generateArcPath({
+      centerX: 100,
+      centerY: 100,
+      outerRadius: 90,
+      innerRadius: 60,
+      startAngle: -90,
+      endAngle: 0,
+    })
 
     expect(path.startsWith('M ')).toBe(true)
     expect(path.trimEnd().endsWith('Z')).toBe(true)

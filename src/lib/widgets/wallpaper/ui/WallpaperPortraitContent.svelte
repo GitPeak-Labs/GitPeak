@@ -6,9 +6,16 @@
   import {
     buildThemedSlices,
     groupSlicesForLegend,
+    legendRowsFor,
   } from '$lib/entities/github-stats/model/language-slices'
-  import { fitLegendName } from '$lib/shared/lib/legend-fit'
+  import { wrapName } from '$lib/shared/lib/legend-fit'
   import { containsCjk } from '$lib/shared/lib/script-segments'
+  import {
+    layoutPortrait,
+    placePortraitLegendRows,
+    placePortraitStats,
+  } from '../lib/portrait-layout'
+  import { buildWallpaperStats } from '../lib/wallpaper-stats'
   import WallpaperDonut from './WallpaperDonut.svelte'
 
   let {
@@ -29,146 +36,59 @@
     scaleUnit: number
   } = $props()
 
-  const displayName = $derived(statistics.displayName || username)
-  const truncatedName = $derived(
-    displayName.length > 22 ? `${displayName.slice(0, 21)}…` : displayName,
+  const MAX_NAME_CHARS = 22
+  const CJK_CAPABLE_FONT = "'Noto Serif JP'"
+  const STAR_CAPABLE_FONT_STYLE = `font-family:${CJK_CAPABLE_FONT}`
+  const FOLDED_ROW_OPACITY = 0.6
+  const LEGEND_NAME_OPACITY = 0.9
+
+  const displayName = $derived(wrapName(statistics.displayName || username, MAX_NAME_CHARS, 1)[0])
+  const nameFontStyle = $derived(containsCjk(displayName) ? STAR_CAPABLE_FONT_STYLE : undefined)
+  const allSlices = $derived(buildThemedSlices(statistics.languages, theme))
+  const legendRows = $derived(legendRowsFor(groupSlicesForLegend(allSlices), theme.muted))
+  const topRepo = $derived(statistics.mostStarredRepo)
+  const layout = $derived(
+    layoutPortrait({
+      width,
+      height,
+      scaleUnit,
+      legendRowCount: legendRows.length,
+      hasTopRepo: topRepo !== null,
+    }),
   )
-  const nameFontFamily = $derived(containsCjk(truncatedName) ? "'Noto Serif JP'" : undefined)
-  const allSlices = $derived(buildThemedSlices(statistics.languages ?? [], theme))
-  const legendGrouping = $derived(groupSlicesForLegend(allSlices))
-  const legendRows: {
-    name: string
-    percentage: number
-    color: string
-    muted: boolean
-  }[] = $derived([
-    ...legendGrouping.displayed.map((slice) => ({
-      name: slice.name,
-      percentage: slice.percentage,
-      color: slice.color,
-      muted: false,
-    })),
-    ...(legendGrouping.otherCount > 0
-      ? [
-          {
-            name: `+${legendGrouping.otherCount} more`,
-            percentage: legendGrouping.otherPercent,
-            color: theme.muted,
-            muted: true,
-          },
-        ]
-      : []),
-  ])
-  const hasTopRepo = $derived(!!statistics.mostStarredRepo)
-
-  // Clears the status bar/clock widgets up top and the home-indicator/gesture bar down below.
-  const topSafe = $derived(scaleUnit * 9)
-  const bottomSafe = $derived(scaleUnit * 6)
-  const contentX = $derived(scaleUnit * 6)
-  const contentWidth = $derived(width - contentX * 2)
-  const contentTop = $derived(topSafe)
-  const contentBottom = $derived(height - bottomSafe)
-  const contentHeight = $derived(contentBottom - contentTop)
-  const baseBlockGap = $derived(scaleUnit * 3.6)
-  // Fixed, not flexible — the logo and name read as a tight lockup instead of stretching apart
-  // with the rest of the layout's adaptive spacing.
-  const brandNameGap = $derived(scaleUnit * 2.2)
-
-  const brandHeight = $derived(scaleUnit * 7.5)
-  const nameHeight = $derived(scaleUnit * 5)
-  const handleHeight = $derived(scaleUnit * 1.8)
-  const outerRadius = $derived(scaleUnit * 22)
-  const legendColumnCount = 2
-  const legendRowCount = $derived(Math.ceil(legendRows.length / legendColumnCount))
-  const legendColumnWidth = $derived(contentWidth / legendColumnCount)
-  const legendPaddingX = $derived(scaleUnit * 2)
-  const legendMaxHeight = $derived(outerRadius * 1.5)
-  const legendRowStep = $derived(
-    legendRowCount > 1 ? Math.min(scaleUnit * 4, legendMaxHeight / (legendRowCount - 1)) : 0,
+  const placedLegendRows = $derived(placePortraitLegendRows(legendRows, layout, scaleUnit))
+  const placedStats = $derived(
+    placePortraitStats(buildWallpaperStats(statistics, theme), layout, scaleUnit),
   )
-  const legendFontSize = $derived(
-    Math.min(scaleUnit * 1.9, Math.max(legendRowStep * 0.55, scaleUnit * 0.9)),
-  )
-  const legendHeight = $derived(Math.max(0, legendRowCount - 1) * legendRowStep + scaleUnit * 1.5)
-  const topRepoHeight = $derived(hasTopRepo ? scaleUnit * 14 : 0)
-  const statValueHeight = $derived(scaleUnit * 7.2)
-  const statLabelOffset = $derived(scaleUnit * 1.8)
-  const statValueOffset = $derived(scaleUnit * 8.2)
-  const statRowStep = $derived(scaleUnit * 12)
-  const statGridHeight = $derived(statRowStep + statValueOffset)
-
-  // This format ships at more than one height (Phone 9:16, Tall 9:21) sharing one width, so a
-  // fixed gap between elements would fill a shrinking share of contentHeight as it gets taller.
-  const elementsHeight = $derived(
-    brandHeight +
-      nameHeight +
-      handleHeight +
-      outerRadius * 2 +
-      legendHeight +
-      topRepoHeight +
-      statGridHeight +
-      brandNameGap,
-  )
-  const targetStackHeight = $derived(contentHeight * 0.9)
-  const blockGap = $derived(Math.max(baseBlockGap, (targetStackHeight - elementsHeight) / 5))
-  const stackHeight = $derived(elementsHeight + blockGap * 5)
-  const stackY = $derived(contentTop + Math.max(0, (contentHeight - stackHeight) / 2))
-
-  const brandBaselineY = $derived(stackY + brandHeight * 0.7)
-  const nameBaselineY = $derived(stackY + brandHeight + brandNameGap + nameHeight * 0.75)
-  const handleBaselineY = $derived(nameBaselineY + handleHeight * 1.2 + scaleUnit * 1.2)
-  const ruleY = $derived(handleBaselineY + blockGap * 0.55)
-  const donutCenterY = $derived(handleBaselineY + blockGap + outerRadius)
-  const donutCenterX = $derived(contentX + contentWidth / 2)
-  const innerRadius = $derived(outerRadius * 0.63)
-
-  const legendStartY = $derived(donutCenterY + outerRadius + blockGap + scaleUnit * 1.2)
-  const legendEndY = $derived(legendStartY + Math.max(0, legendRowCount - 1) * legendRowStep)
-  const topRepoRuleY = $derived(legendEndY + scaleUnit * 5.5)
-  const topRepoLabelY = $derived(topRepoRuleY + scaleUnit * 3)
-  const topRepoValueY = $derived(topRepoLabelY + scaleUnit * 4.8)
-  const statGridY = $derived(
-    (hasTopRepo ? topRepoValueY + scaleUnit * 3.2 : legendEndY + scaleUnit * 1.5) + blockGap,
-  )
-
-  const statLabels = $derived([
-    { label: 'Contributions', value: statistics.totalContributions, accent: 'foam' },
-    { label: 'Commits', value: statistics.totalCommits, accent: 'iris' },
-    { label: 'Stars', value: statistics.totalStars, accent: 'gold' },
-    { label: 'Repos', value: statistics.totalRepos, accent: 'pine' },
-    { label: 'Followers', value: statistics.followers, accent: 'rose' },
-    { label: 'Pull Requests', value: statistics.totalPrs, accent: 'love' },
-  ])
-  const statColumnWidth = $derived(contentWidth / 3)
 </script>
 
 <text
-  x={contentX + contentWidth / 2}
-  y={brandBaselineY}
+  x={layout.centerX}
+  y={layout.brandBaselineY}
   class="text-serif"
-  font-size={brandHeight}
+  font-size={layout.brandHeight}
   text-anchor="middle"
-  style="fill:url(#brand-gradient)"
+  style="fill:url('#brand-gradient')"
 >
   GitPeak
 </text>
 
 <text
-  x={contentX + contentWidth / 2}
-  y={nameBaselineY}
+  x={layout.centerX}
+  y={layout.nameBaselineY}
   class="text-serif"
-  font-size={nameHeight}
+  font-size={layout.nameHeight}
   font-weight="700"
   text-anchor="middle"
-  style={nameFontFamily ? `font-family:${nameFontFamily}` : undefined}
+  style={nameFontStyle}
 >
-  {truncatedName}
+  {displayName}
 </text>
 <text
-  x={contentX + contentWidth / 2}
-  y={handleBaselineY}
+  x={layout.centerX}
+  y={layout.handleBaselineY}
   class="text-main"
-  font-size={handleHeight}
+  font-size={layout.handleHeight}
   text-anchor="middle"
   opacity="0.85"
   style="fill:{theme.subtle}"
@@ -177,13 +97,13 @@
 </text>
 
 <line
-  x1={contentX}
-  y1={ruleY}
-  x2={contentX + contentWidth}
-  y2={ruleY}
+  x1={layout.contentX}
+  y1={layout.ruleY}
+  x2={layout.contentX + layout.contentWidth}
+  y2={layout.ruleY}
   stroke={theme.muted}
   stroke-opacity="0.25"
-  stroke-width={scaleUnit * 0.06}
+  stroke-width={layout.hairlineWidth}
 />
 
 {#if allSlices.length}
@@ -191,69 +111,59 @@
     slices={allSlices}
     {theme}
     {avatarDataUri}
-    centerX={donutCenterX}
-    centerY={donutCenterY}
-    {outerRadius}
-    {innerRadius}
+    centerX={layout.centerX}
+    centerY={layout.donutCenterY}
+    outerRadius={layout.outerRadius}
+    innerRadius={layout.innerRadius}
     filterId="wp-donut-glow-pt"
   />
 
-  {#each legendRows as slice, index (slice.name)}
-    {@const column = index % legendColumnCount}
-    {@const row = Math.floor(index / legendColumnCount)}
-    {@const columnX = contentX + column * legendColumnWidth}
-    {@const rowY = legendStartY + row * legendRowStep}
+  {#each placedLegendRows as legendRow (legendRow.name)}
     <circle
-      cx={columnX + legendPaddingX}
-      cy={rowY - legendFontSize * 0.32}
-      r={legendFontSize * 0.4}
-      fill={slice.color}
-      opacity={slice.muted ? 0.6 : 1}
+      cx={legendRow.dotX}
+      cy={legendRow.dotY}
+      r={legendRow.dotRadius}
+      fill={legendRow.color}
+      opacity={legendRow.isFoldedRemainder ? FOLDED_ROW_OPACITY : 1}
     />
     <text
-      x={columnX + legendPaddingX + scaleUnit * 1.6}
-      y={rowY}
+      x={legendRow.nameX}
+      y={legendRow.baselineY}
       class="text-main"
-      font-size={legendFontSize}
-      opacity={slice.muted ? 0.6 : 0.9}
+      font-size={layout.legendFontSize}
+      opacity={legendRow.isFoldedRemainder ? FOLDED_ROW_OPACITY : LEGEND_NAME_OPACITY}
     >
-      {fitLegendName(
-        slice.name,
-        slice.percentage,
-        legendColumnWidth - legendPaddingX * 2 - scaleUnit * 1.6,
-        legendFontSize,
-      )}
+      {legendRow.nameLabel}
     </text>
     <text
-      x={columnX + legendColumnWidth - legendPaddingX}
-      y={rowY}
+      x={legendRow.percentX}
+      y={legendRow.baselineY}
       class="text-main"
-      font-size={legendFontSize}
+      font-size={layout.legendFontSize}
       font-weight="600"
       text-anchor="end"
-      opacity={slice.muted ? 0.6 : 1}
-      style="fill:{slice.color}"
+      opacity={legendRow.isFoldedRemainder ? FOLDED_ROW_OPACITY : 1}
+      style="fill:{legendRow.color}"
     >
-      {slice.percentage}%
+      {legendRow.percentage}%
     </text>
   {/each}
 
-  {#if hasTopRepo}
-    {@const repo = statistics.mostStarredRepo!}
+  {#if topRepo}
     <line
-      x1={contentX + contentWidth * 0.3}
-      y1={topRepoRuleY}
-      x2={contentX + contentWidth * 0.7}
-      y2={topRepoRuleY}
+      x1={layout.topRepoRuleStartX}
+      y1={layout.topRepoRuleY}
+      x2={layout.topRepoRuleEndX}
+      y2={layout.topRepoRuleY}
       stroke={theme.muted}
       stroke-opacity="0.25"
-      stroke-width={scaleUnit * 0.06}
+      stroke-width={layout.hairlineWidth}
     />
     <text
-      x={contentX + contentWidth / 2}
-      y={topRepoLabelY}
+      x={layout.centerX}
+      y={layout.topRepoLabelY}
       class="text-main"
-      font-size={scaleUnit * 2.1}
+      font-size={layout.topRepoLabelFontSize}
       letter-spacing="0.14em"
       font-weight="600"
       text-anchor="middle"
@@ -261,53 +171,45 @@
     >
       TOP REPOSITORY
     </text>
-    <!-- ★ isn't in Gelasio or JetBrains Mono — same per-chunk font defect as containsCjk, just
-         triggered by a symbol. Noto Serif JP covers both, so pin the whole line to it. -->
     <text
-      x={contentX + contentWidth / 2}
-      y={topRepoValueY}
+      x={layout.centerX}
+      y={layout.topRepoValueY}
       class="text-serif"
-      font-size={scaleUnit * 3.6}
+      font-size={layout.topRepoNameFontSize}
       font-weight="700"
       text-anchor="middle"
-      style="font-family:'Noto Serif JP'"
+      style={STAR_CAPABLE_FONT_STYLE}
     >
-      {repo.name}
-      <tspan fill={theme.gold} dx={scaleUnit * 1} font-size={scaleUnit * 2.8}
-        >★ {formatNumber(repo.stars)}</tspan
+      {topRepo.name}
+      <tspan fill={theme.gold} dx={layout.topRepoStarsGap} font-size={layout.topRepoStarsFontSize}
+        >★ {formatNumber(topRepo.stars)}</tspan
       >
     </text>
   {/if}
 {/if}
 
-{#each statLabels as item, index (item.label)}
-  {@const column = index % 3}
-  {@const row = Math.floor(index / 3)}
-  {@const columnX = contentX + column * statColumnWidth + statColumnWidth / 2}
-  {@const rowY = statGridY + row * statRowStep}
-  {@const accent = theme[item.accent]}
-
+{#each placedStats as stat (stat.label)}
   <text
-    x={columnX}
-    y={rowY + statLabelOffset}
+    x={stat.centerX}
+    y={stat.labelY}
     class="text-main"
-    font-size={scaleUnit * 2}
+    font-size={layout.statLabelFontSize}
     letter-spacing="0.08em"
     font-weight="600"
     text-anchor="middle"
     style="fill:{theme.subtle}"
   >
-    {item.label.toUpperCase()}
+    {stat.label.toUpperCase()}
   </text>
   <text
-    x={columnX}
-    y={rowY + statValueOffset}
+    x={stat.centerX}
+    y={stat.valueY}
     class="text-serif"
-    font-size={statValueHeight}
+    font-size={layout.statValueFontSize}
     font-weight="700"
     text-anchor="middle"
-    style="fill:{accent}"
+    style="fill:{stat.color}"
   >
-    {formatNumber(item.value)}
+    {stat.countLabel}
   </text>
 {/each}

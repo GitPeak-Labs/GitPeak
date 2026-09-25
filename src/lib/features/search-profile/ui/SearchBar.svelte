@@ -4,18 +4,20 @@
   import { Button } from '$lib/shared/ui/button'
   import { cn } from '$lib/shared/lib/class-merger'
 
+  const SEARCH_ICON_SIZE_PX = 15
+
   let { onSearch }: { onSearch: (username: string) => void } = $props()
 
   let username = $state('')
-  let focused = $state(false)
+  let isFocused = $state(false)
 
   function handleSearch() {
     const trimmed = username.trim()
     if (trimmed) onSearch(trimmed)
   }
 
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Enter') handleSearch()
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter') handleSearch()
   }
 </script>
 
@@ -24,22 +26,22 @@
     'glass relative flex w-full max-w-[calc(100vw-24px)]',
     'max-w-lg touch-manipulation items-center',
     'rounded-2xl p-1 transition-all duration-300',
-    focused && 'focused',
+    isFocused && 'focused',
   )}
 >
   <div class="flex shrink-0 items-center pr-1 pl-4">
     <Search
-      size={15}
+      size={SEARCH_ICON_SIZE_PX}
       aria-hidden="true"
-      class={cn('search-icon', focused && 'search-icon--focused')}
+      class={cn('search-icon', isFocused && 'search-icon-focused')}
     />
   </div>
 
   <Input
     bind:value={username}
     onkeydown={handleKeydown}
-    onfocus={() => (focused = true)}
-    onblur={() => (focused = false)}
+    onfocus={() => (isFocused = true)}
+    onblur={() => (isFocused = false)}
     placeholder="username"
     spellcheck="false"
     autocomplete="off"
@@ -76,7 +78,7 @@
     transition: color 0.2s ease;
   }
 
-  .search-icon--focused {
+  .search-icon-focused {
     color: var(--iris);
   }
 
@@ -91,9 +93,9 @@
   }
 
   .focused {
-    border-color: color-mix(in srgb, var(--subtle) 40%, transparent) !important;
+    border-color: color-mix(in srgb, var(--subtle) 40%, transparent);
     box-shadow:
       0 0 0 4px color-mix(in srgb, var(--iris) 8%, transparent),
-      0 24px 48px -12px rgba(0, 0, 0, 0.5);
+      0 24px 48px -12px rgb(0 0 0 / 50%);
   }
 </style>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ThemeTokens } from '$lib/entities/theme/model/theme-manager'
+  import ReadmeBackdrop, { CARD_HEIGHT, CARD_WIDTH } from './ReadmeBackdrop.svelte'
 
   let {
     username,
@@ -11,42 +12,33 @@
     message?: string
   } = $props()
 
-  const WIDTH = 960
-  const HEIGHT = 520
+  const CENTER_X = CARD_WIDTH / 2
+  const CENTER_Y = CARD_HEIGHT / 2
+  const STATUS_DOT_OFFSET_Y = -46
+  const STATUS_DOT_RADIUS = 5
+  const MESSAGE_OFFSET_Y = 4
+  const DETAIL_OFFSET_Y = 40
 </script>
 
 <svg
-  width={WIDTH}
-  height={HEIGHT}
-  viewBox="0 0 {WIDTH} {HEIGHT}"
+  width={CARD_WIDTH}
+  height={CARD_HEIGHT}
+  viewBox="0 0 {CARD_WIDTH} {CARD_HEIGHT}"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
 >
-  <defs>
-    <radialGradient id="aurora-iris" cx="-10%" cy="-10%" r="60%">
-      <stop offset="0%" stop-color={theme.iris} stop-opacity="0.16" />
-      <stop offset="100%" stop-color={theme.base} stop-opacity="0" />
-    </radialGradient>
-    <radialGradient id="aurora-foam" cx="110%" cy="110%" r="60%">
-      <stop offset="0%" stop-color={theme.foam} stop-opacity="0.12" />
-      <stop offset="100%" stop-color={theme.base} stop-opacity="0" />
-    </radialGradient>
-    <radialGradient id="aurora-love" cx="65%" cy="-5%" r="55%">
-      <stop offset="0%" stop-color={theme.love} stop-opacity="0.08" />
-      <stop offset="100%" stop-color={theme.base} stop-opacity="0" />
-    </radialGradient>
-  </defs>
+  <ReadmeBackdrop {theme} />
 
-  <rect width={WIDTH} height={HEIGHT} rx="24" fill={theme.base} />
-  <rect width={WIDTH} height={HEIGHT} rx="24" fill="url(#aurora-iris)" />
-  <rect width={WIDTH} height={HEIGHT} rx="24" fill="url(#aurora-foam)" />
-  <rect width={WIDTH} height={HEIGHT} rx="24" fill="url(#aurora-love)" />
-
-  <circle cx={WIDTH / 2} cy={HEIGHT / 2 - 46} r="5" fill={theme.gold} />
+  <circle
+    cx={CENTER_X}
+    cy={CENTER_Y + STATUS_DOT_OFFSET_Y}
+    r={STATUS_DOT_RADIUS}
+    fill={theme.gold}
+  />
 
   <text
-    x={WIDTH / 2}
-    y={HEIGHT / 2 + 4}
+    x={CENTER_X}
+    y={CENTER_Y + MESSAGE_OFFSET_Y}
     class="text-serif"
     font-size="32"
     font-style="italic"
@@ -56,26 +48,13 @@
   </text>
 
   <text
-    x={WIDTH / 2}
-    y={HEIGHT / 2 + 40}
+    x={CENTER_X}
+    y={CENTER_Y + DETAIL_OFFSET_Y}
     class="text-main"
     font-size="15"
-    fill={theme.subtle}
+    style="fill:{theme.subtle}"
     text-anchor="middle"
   >
     @{username} — this card will refresh automatically
-  </text>
-
-  <text
-    x={WIDTH - 24}
-    y={HEIGHT - 16}
-    class="text-serif"
-    font-size="14"
-    font-style="italic"
-    fill={theme.iris}
-    fill-opacity="0.55"
-    text-anchor="end"
-  >
-    GitPeak
   </text>
 </svg>

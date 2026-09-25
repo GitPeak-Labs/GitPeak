@@ -27,16 +27,16 @@
     {@const offset = isHovered ? calculateSegmentOffset(slice) : { offsetX: 0, offsetY: 0 }}
 
     <path
-      d={generateArcPath(
+      d={generateArcPath({
         centerX,
         centerY,
-        outerRadiusPixels,
-        innerRadiusPixels,
-        slice.startAngleDegrees,
-        slice.endAngleDegrees,
-        offset.offsetX,
-        offset.offsetY,
-      )}
+        outerRadius: outerRadiusPixels,
+        innerRadius: innerRadiusPixels,
+        startAngle: slice.startAngleDegrees,
+        endAngle: slice.endAngleDegrees,
+        offsetX: offset.offsetX,
+        offsetY: offset.offsetY,
+      })}
       fill={slice.color}
       class={cn(
         'cursor-pointer touch-manipulation transition-all duration-200',

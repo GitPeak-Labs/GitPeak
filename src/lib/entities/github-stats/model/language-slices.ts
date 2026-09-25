@@ -13,7 +13,7 @@ export function buildThemedSlices(
   }))
 }
 
-export interface LegendGrouping {
+export type LegendGrouping = {
   displayed: PieSlice[]
   otherPercent: number
   otherCount: number
@@ -30,4 +30,29 @@ export function groupSlicesForLegend(
   const otherPercent = rest.reduce((sum, slice) => sum + slice.percentage, 0)
 
   return { displayed, otherPercent, otherCount: rest.length }
+}
+
+export type LegendRow = {
+  name: string
+  percentage: number
+  color: string
+  isFoldedRemainder: boolean
+}
+
+export function legendRowsFor(grouping: LegendGrouping, remainderColor: string): LegendRow[] {
+  const namedRows = grouping.displayed.map((slice) => ({
+    name: slice.name,
+    percentage: slice.percentage,
+    color: slice.color,
+    isFoldedRemainder: false,
+  }))
+  if (grouping.otherCount === 0) return namedRows
+
+  const remainderRow = {
+    name: `+${grouping.otherCount} more`,
+    percentage: grouping.otherPercent,
+    color: remainderColor,
+    isFoldedRemainder: true,
+  }
+  return [...namedRows, remainderRow]
 }

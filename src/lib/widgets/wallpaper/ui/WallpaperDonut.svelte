@@ -23,14 +23,21 @@
     filterId: string
   } = $props()
 
-  const glowStd = $derived((outerRadius - innerRadius) * 0.4)
-  const avatarRadius = $derived(innerRadius - Math.max(3, (outerRadius - innerRadius) * 0.12))
+  const GLOW_TO_RING_THICKNESS = 0.4
+  const MIN_AVATAR_GAP = 3
+  const AVATAR_GAP_TO_RING_THICKNESS = 0.12
+
+  const ringThickness = $derived(outerRadius - innerRadius)
+  const glowStandardDeviation = $derived(ringThickness * GLOW_TO_RING_THICKNESS)
+  const avatarRadius = $derived(
+    innerRadius - Math.max(MIN_AVATAR_GAP, ringThickness * AVATAR_GAP_TO_RING_THICKNESS),
+  )
   const clipId = $derived(`${filterId}-avatar-clip`)
 </script>
 
 <defs>
   <filter id={filterId} x="-60%" y="-60%" width="220%" height="220%">
-    <feGaussianBlur in="SourceGraphic" stdDeviation={glowStd} result="blur" />
+    <feGaussianBlur in="SourceGraphic" stdDeviation={glowStandardDeviation} result="blur" />
     <feMerge>
       <feMergeNode in="blur" />
       <feMergeNode in="SourceGraphic" />
@@ -55,14 +62,14 @@
   <g filter="url(#{filterId})">
     {#each slices as slice (slice.name)}
       <path
-        d={generateArcPath(
+        d={generateArcPath({
           centerX,
           centerY,
           outerRadius,
           innerRadius,
-          slice.startAngleDegrees,
-          slice.endAngleDegrees,
-        )}
+          startAngle: slice.startAngleDegrees,
+          endAngle: slice.endAngleDegrees,
+        })}
         fill={slice.color}
         stroke="rgba(0,0,0,0.25)"
         stroke-width="1"

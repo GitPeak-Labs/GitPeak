@@ -6,6 +6,9 @@
   import { Card, CardContent } from '$lib/shared/ui/card'
   import { cn } from '$lib/shared/lib/class-merger'
 
+  const STAR_ICON_SIZE = 12
+  const EXTERNAL_LINK_ICON_SIZE = 15
+
   let { repository }: { repository: MostStarredRepo } = $props()
 </script>
 
@@ -17,7 +20,7 @@
     )}
   >
     <a
-      href={repository?.url}
+      href={repository.url}
       target="_blank"
       rel="external noopener noreferrer"
       class="block no-underline"
@@ -29,7 +32,7 @@
               ★ most starred repository
             </span>
             <span class="truncate font-serif text-lg leading-tight font-semibold text-(--text)">
-              {repository?.name}
+              {repository.name}
             </span>
 
             <div class="mt-1 flex items-center gap-2">
@@ -41,8 +44,8 @@
                   'flex items-center gap-1.5 rounded-lg px-2.5 py-1 font-mono text-(--gold)',
                 )}
               >
-                <Star size={12} class="fill-(--gold)" />
-                {formatNumber(repository?.stars ?? 0)}
+                <Star size={STAR_ICON_SIZE} class="fill-(--gold)" />
+                {formatNumber(repository.stars)}
               </Badge>
               <span class="font-mono text-[0.625rem] text-(--muted)">stars</span>
             </div>
@@ -56,7 +59,7 @@
             )}
             aria-hidden="true"
           >
-            <ArrowUpRight size={15} />
+            <ArrowUpRight size={EXTERNAL_LINK_ICON_SIZE} />
           </div>
         </div>
       </CardContent>

@@ -1,13 +1,15 @@
 <script lang="ts">
   import '../app.css'
   import { Toaster } from 'svelte-sonner'
-  import { onMount } from 'svelte'
+  import { onMount, type Snippet } from 'svelte'
   import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query'
   import { initTheme } from '$lib/entities/theme/model/theme-manager'
 
-  let { children } = $props()
+  let { children }: { children: Snippet } = $props()
 
-  onMount(() => initTheme())
+  onMount(() => {
+    initTheme()
+  })
 
   const queryClient = new QueryClient({
     defaultOptions: {

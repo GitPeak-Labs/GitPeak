@@ -3,11 +3,10 @@ export async function withTimeout<Value>(
   timeoutMilliseconds: number,
   message: string,
 ): Promise<Value> {
-  let timeoutId: ReturnType<typeof setTimeout> | undefined
-
-  const timeout = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error(message)), timeoutMilliseconds)
-  })
+  const { promise: timeout, reject: rejectTimeout } = Promise.withResolvers<never>()
+  const timeoutId = setTimeout(() => {
+    rejectTimeout(new Error(message))
+  }, timeoutMilliseconds)
 
   try {
     return await Promise.race([promise, timeout])

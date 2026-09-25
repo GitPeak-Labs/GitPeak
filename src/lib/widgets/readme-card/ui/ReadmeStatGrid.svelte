@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { GithubStats } from '$lib/entities/github-stats/model/github-stats'
   import type { ThemeTokens } from '$lib/entities/theme/model/theme-manager'
-  import { heroItems, detailItems } from '$lib/entities/github-stats/model/stat-items'
-  import { formatNumber } from '$lib/shared/lib/number-formatting'
+  import { layoutStatGrid } from '../lib/stat-grid-layout'
+  import ReadmeCountUp from './ReadmeCountUp.svelte'
 
   let {
     statistics,
@@ -11,6 +11,7 @@
     y,
     width,
     height,
+    isBoxed = true,
   }: {
     statistics: GithubStats
     theme: ThemeTokens
@@ -18,76 +19,77 @@
     y: number
     width: number
     height: number
+    isBoxed?: boolean
   } = $props()
 
-  const HERO_HEIGHT = 112
-  const HERO_GAP = 16
-  const DETAIL_COLUMNS = 2
-  const DETAIL_ROWS = 2
-  const DETAIL_COLUMN_GAP = 16
-  const DETAIL_ROW_GAP = 12
+  const HERO_CARD_STYLE = {
+    cornerRadius: 16,
+    inset: 20,
+    labelBaselineY: 32,
+    countBaselineY: 74,
+    countFontSize: 38,
+    barOffsetY: 86,
+    barWidth: 48,
+    barHeight: 3,
+  }
+  const DETAIL_CARD_STYLE = {
+    cornerRadius: 14,
+    inset: 16,
+    labelBaselineY: 24,
+    countBaselineY: 54,
+    countFontSize: 26,
+    barOffsetY: 62,
+    barWidth: 36,
+    barHeight: 2,
+  }
+  const CARD_REVEAL_DELAY_SECONDS = 0.3
+  const CARD_STAGGER_SECONDS = 0.07
+  const BAR_GROW_LAG_SECONDS = 0.25
 
-  const heroWidth = $derived((width - HERO_GAP) / 2)
-  const detailWidth = $derived((width - DETAIL_COLUMN_GAP * (DETAIL_COLUMNS - 1)) / DETAIL_COLUMNS)
-  const detailTop = $derived(y + HERO_HEIGHT + HERO_GAP)
-  const detailAreaHeight = $derived(height - HERO_HEIGHT - HERO_GAP)
-  const detailHeight = $derived(
-    (detailAreaHeight - DETAIL_ROW_GAP * (DETAIL_ROWS - 1)) / DETAIL_ROWS,
-  )
-
-  const hero = $derived(heroItems(statistics))
-  const detail = $derived(detailItems(statistics).filter((item) => item.label !== 'Followers'))
+  const cards = $derived(layoutStatGrid({ statistics, theme, bounds: { x, y, width, height } }))
 </script>
 
-{#each hero as item, index (item.label)}
-  {@const cardX = x + index * (heroWidth + HERO_GAP)}
-  {@const accent = theme[item.accentVar]}
+{#each cards as card, cardIndex (card.label)}
+  {@const cardStyle = card.isHero ? HERO_CARD_STYLE : DETAIL_CARD_STYLE}
+  {@const revealSeconds = CARD_REVEAL_DELAY_SECONDS + cardIndex * CARD_STAGGER_SECONDS}
+  {@const contentX = isBoxed ? card.x + cardStyle.inset : card.x}
+  {@const barY = card.y + cardStyle.barOffsetY}
 
-  <g>
-    <rect
-      x={cardX}
-      {y}
-      width={heroWidth}
-      height={HERO_HEIGHT}
-      rx="16"
-      fill={theme.surface}
-      fill-opacity="0.6"
-      stroke={theme.subtle}
-      stroke-opacity="0.15"
-      filter="url(#glass-shadow)"
-    />
-    <text x={cardX + 20} y={y + 34} class="text-subtle">{item.label}</text>
-    <text x={cardX + 20} y={y + 80} class="text-serif" font-size="38">
-      {formatNumber(item.value)}
+  <g class="anim-row" style="animation-delay:{revealSeconds}s">
+    {#if isBoxed}
+      <rect
+        x={card.x}
+        y={card.y}
+        width={card.width}
+        height={card.height}
+        rx={cardStyle.cornerRadius}
+        fill={theme.surface}
+        fill-opacity="0.6"
+        stroke={theme.subtle}
+        stroke-opacity="0.15"
+        filter="url(#glass-shadow)"
+      />
+    {/if}
+    <text x={contentX} y={card.y + cardStyle.labelBaselineY} class="text-subtle">
+      {card.label}
     </text>
-    <rect x={cardX + 20} y={y + 92} width="48" height="3" rx="1.5" fill={accent} />
-  </g>
-{/each}
-
-{#each detail as item, index (item.label)}
-  {@const column = index % DETAIL_COLUMNS}
-  {@const row = Math.floor(index / DETAIL_COLUMNS)}
-  {@const cardX = x + column * (detailWidth + DETAIL_COLUMN_GAP)}
-  {@const cardY = detailTop + row * (detailHeight + DETAIL_ROW_GAP)}
-  {@const accent = theme[item.accentVar]}
-
-  <g>
-    <rect
-      x={cardX}
-      y={cardY}
-      width={detailWidth}
-      height={detailHeight}
-      rx="14"
-      fill={theme.surface}
-      fill-opacity="0.6"
-      stroke={theme.subtle}
-      stroke-opacity="0.15"
-      filter="url(#glass-shadow)"
+    <ReadmeCountUp
+      finalCount={card.count}
+      beginSeconds={revealSeconds}
+      x={contentX}
+      y={card.y + cardStyle.countBaselineY}
+      fontSize={cardStyle.countFontSize}
     />
-    <text x={cardX + 16} y={cardY + 28} class="text-subtle" font-size="10">{item.label}</text>
-    <text x={cardX + 16} y={cardY + 66} class="text-serif" font-size="26">
-      {formatNumber(item.value)}
-    </text>
-    <rect x={cardX + 16} y={cardY + 76} width="36" height="2" rx="1" fill={accent} />
+    <rect
+      x={contentX}
+      y={barY}
+      width={cardStyle.barWidth}
+      height={cardStyle.barHeight}
+      rx={cardStyle.barHeight / 2}
+      fill={card.accentColor}
+      class="anim-grow"
+      style="transform-origin:{contentX}px {barY}px; animation-delay:{revealSeconds +
+        BAR_GROW_LAG_SECONDS}s"
+    />
   </g>
 {/each}

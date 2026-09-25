@@ -1,1 +1,3 @@
-export const ssr = false
+const isServerSideRenderingEnabled = false
+
+export { isServerSideRenderingEnabled as ssr }

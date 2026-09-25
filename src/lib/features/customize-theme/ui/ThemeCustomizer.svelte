@@ -4,24 +4,28 @@
   import { Button } from '$lib/shared/ui/button'
   import { cn } from '$lib/shared/lib/class-merger'
 
-  let open = $state(false)
+  const TOGGLE_ICON_SIZE = 14
+  const CHEVRON_ICON_SIZE = 12
+  const CLOSE_ICON_SIZE = 13
+
+  let isOpen = $state(false)
   let panelElement: HTMLDivElement | undefined = $state()
   let toggleElement: HTMLButtonElement | undefined = $state()
 
-  function handleOutsideClick(e: MouseEvent) {
-    if (!open) return
-    const target = e.target as Node
+  function handleOutsideClick(outsideClickEvent: MouseEvent) {
+    if (!isOpen) return
+    const target = outsideClickEvent.target as Node
     if (panelElement?.contains(target) || toggleElement?.contains(target)) return
-    open = false
+    isOpen = false
   }
 </script>
 
 <svelte:window onclick={handleOutsideClick} />
 
-<!-- Toggle button -->
 <button
   bind:this={toggleElement}
-  onclick={() => (open = !open)}
+  type="button"
+  onclick={() => (isOpen = !isOpen)}
   class={cn(
     'glass flex items-center gap-2 rounded-xl border px-3',
     'py-2 font-mono text-xs tracking-wide uppercase',
@@ -33,18 +37,21 @@
   "
   aria-label="Customize theme"
 >
-  <Palette size={14} />
+  <Palette size={TOGGLE_ICON_SIZE} />
   <span class="hidden sm:inline">theme</span>
-  <ChevronDown size={12} class="transition-transform duration-200 {open ? 'rotate-180' : ''}" />
+  <ChevronDown
+    size={CHEVRON_ICON_SIZE}
+    class="transition-transform duration-200 {isOpen ? 'rotate-180' : ''}"
+  />
 </button>
 
-{#if open}
+{#if isOpen}
   <div
     role="button"
     tabindex="-1"
     aria-label="Close theme customizer"
-    onclick={() => (open = false)}
-    onkeydown={(e) => e.key === 'Enter' && (open = false)}
+    onclick={() => (isOpen = false)}
+    onkeydown={(keydownEvent) => keydownEvent.key === 'Enter' && (isOpen = false)}
     class="fixed inset-0 z-40 bg-black/60 sm:hidden"
   ></div>
 
@@ -58,7 +65,7 @@
     style="
       background: var(--overlay);
       border: 1px solid color-mix(in srgb, var(--subtle) 20%, transparent);
-      box-shadow: 0 32px 64px -16px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 32px 64px -16px rgb(0 0 0 / 60%);
     "
   >
     <div
@@ -76,10 +83,10 @@
         variant="ghost"
         size="icon"
         class="-mr-1.5 h-6 w-6 sm:hidden"
-        onclick={() => (open = false)}
+        onclick={() => (isOpen = false)}
         aria-label="Close"
       >
-        <X size={13} />
+        <X size={CLOSE_ICON_SIZE} />
       </Button>
     </div>
 

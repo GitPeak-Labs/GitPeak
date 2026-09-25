@@ -12,14 +12,22 @@
   import { Palette } from 'lucide-svelte'
   import { cn } from '$lib/shared/lib/class-merger'
 
-  const presetNames = Object.keys(PRESET_THEMES)
-  const SEGMENT_DEGREES = 360 / presetNames.length
+  const FULL_CIRCLE_DEGREES = 360
+  const HALF_CIRCLE_DEGREES = 180
   const RING_RADIUS_PIXELS = 104
   const FAB_SIZE_PIXELS = 52
   const TAP_THRESHOLD_DEGREES = 8
+  const FAB_PRESSED_SCALE = 0.85
+  const PALETTE_ICON_SIZE = 20
+  const CENTER_CIRCLE_SIZE_PIXELS = 88
+  const INDICATOR_OFFSET_PIXELS = 20
+  const SEGMENT_DOT_RADIUS_PIXELS = 15
+
+  const presetNames = Object.keys(PRESET_THEMES)
+  const SEGMENT_DEGREES = FULL_CIRCLE_DEGREES / presetNames.length
 
   let fabElement: HTMLButtonElement | undefined = $state()
-  let open = $state(false)
+  let isOpen = $state(false)
   let isDragging = $state(false)
   let centerX = $state(0)
   let centerY = $state(0)
@@ -31,19 +39,20 @@
   const currentPresetName = $derived(getActivePresetName() ?? 'Rosé Pine')
 
   const activeIndex = $derived.by(() => {
-    const normalizedDegrees = ((-rotationDegrees % 360) + 360) % 360
+    const normalizedDegrees =
+      ((-rotationDegrees % FULL_CIRCLE_DEGREES) + FULL_CIRCLE_DEGREES) % FULL_CIRCLE_DEGREES
     return Math.round(normalizedDegrees / SEGMENT_DEGREES) % presetNames.length
   })
 
   $effect(() => {
-    if (!open) return
+    if (!isOpen) return
     const theme = presetNames[activeIndex]
     previewPreset(theme)
     setActivePresetName(theme)
   })
 
   function angleFromCenter(clientX: number, clientY: number): number {
-    return (Math.atan2(clientY - centerY, clientX - centerX) * 180) / Math.PI
+    return (Math.atan2(clientY - centerY, clientX - centerX) * HALF_CIRCLE_DEGREES) / Math.PI
   }
 
   function alignRotationToCurrentPreset(): number {
@@ -51,7 +60,7 @@
     return -activePresetIndex * SEGMENT_DEGREES
   }
 
-  function handlePointerDown(e: PointerEvent): void {
+  function handlePointerDown(pointerDownEvent: PointerEvent): void {
     if (!fabElement) return
 
     const rect = fabElement.getBoundingClientRect()
@@ -60,22 +69,23 @@
 
     rotationDegrees = alignRotationToCurrentPreset()
 
-    dragStartPointerAngle = angleFromCenter(e.clientX, e.clientY)
+    dragStartPointerAngle = angleFromCenter(pointerDownEvent.clientX, pointerDownEvent.clientY)
     dragStartRotation = rotationDegrees
     isDragging = true
-    open = true
-    fabElement.setPointerCapture(e.pointerId)
+    isOpen = true
+    fabElement.setPointerCapture(pointerDownEvent.pointerId)
   }
 
-  function handlePointerMove(e: PointerEvent): void {
+  function handlePointerMove(pointerMoveEvent: PointerEvent): void {
     if (!isDragging) return
     rotationDegrees =
-      dragStartRotation + (angleFromCenter(e.clientX, e.clientY) - dragStartPointerAngle)
+      dragStartRotation +
+      (angleFromCenter(pointerMoveEvent.clientX, pointerMoveEvent.clientY) - dragStartPointerAngle)
   }
 
-  function handlePointerUp(e: PointerEvent): void {
-    if (!open) return
-    fabElement?.releasePointerCapture(e.pointerId)
+  function handlePointerUp(pointerUpEvent: PointerEvent): void {
+    if (!isOpen) return
+    fabElement?.releasePointerCapture(pointerUpEvent.pointerId)
     isDragging = false
 
     const rotatedDegrees = Math.abs(rotationDegrees - dragStartRotation)
@@ -84,19 +94,19 @@
     }
 
     rotationDegrees = Math.round(rotationDegrees / SEGMENT_DEGREES) * SEGMENT_DEGREES
-    open = false
+    isOpen = false
 
     const chosenTheme = presetNames[activeIndex]
     applyPreset(chosenTheme)
     setActivePresetName(chosenTheme)
   }
 
-  function handlePointerCancel(e: PointerEvent): void {
-    if (!open) return
-    fabElement?.releasePointerCapture(e.pointerId)
+  function handlePointerCancel(pointerCancelEvent: PointerEvent): void {
+    if (!isOpen) return
+    fabElement?.releasePointerCapture(pointerCancelEvent.pointerId)
     isDragging = false
     rotationDegrees = dragStartRotation
-    open = false
+    isOpen = false
   }
 </script>
 
@@ -114,8 +124,8 @@
     color: var(--iris);
     border-color: var(--border-glass);
     background: color-mix(in srgb, var(--overlay) 92%, transparent);
-    opacity: {open ? 0 : 1};
-    transform: scale({open ? 0.85 : 1});
+    opacity: {isOpen ? 0 : 1};
+    transform: scale({isOpen ? FAB_PRESSED_SCALE : 1});
     transition: opacity 160ms ease, transform 160ms ease;
   "
   onpointerdown={handlePointerDown}
@@ -123,14 +133,14 @@
   onpointerup={handlePointerUp}
   onpointercancel={handlePointerCancel}
 >
-  <Palette size={20} />
+  <Palette size={PALETTE_ICON_SIZE} />
 </button>
 
-{#if open}
+{#if isOpen}
   <div
     class="pointer-events-none fixed z-50"
     style="left: {centerX}px; top: {centerY}px;"
-    transition:scale={{ duration: 220, start: FAB_SIZE_PIXELS / 88 }}
+    transition:scale={{ duration: 220, start: FAB_SIZE_PIXELS / CENTER_CIRCLE_SIZE_PIXELS }}
   >
     <div
       class="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
@@ -150,7 +160,7 @@
         width: 10px;
         height: 10px;
         left: 0;
-        top: {-RING_RADIUS_PIXELS - 20}px;
+        top: {-RING_RADIUS_PIXELS - INDICATOR_OFFSET_PIXELS}px;
         background: var(--iris);
         box-shadow: 0 0 8px 1px color-mix(in srgb, var(--iris) 70%, transparent);
       "
@@ -166,7 +176,7 @@
       "
     >
       {#each presetNames as name, index (name)}
-        {@const angleRadians = (index * SEGMENT_DEGREES * Math.PI) / 180}
+        {@const angleRadians = (index * SEGMENT_DEGREES * Math.PI) / HALF_CIRCLE_DEGREES}
         {@const offsetX = RING_RADIUS_PIXELS * Math.sin(angleRadians)}
         {@const offsetY = -RING_RADIUS_PIXELS * Math.cos(angleRadians)}
         {@const isActive = activeIndex === index}
@@ -178,8 +188,8 @@
           style="
             width: 30px;
             height: 30px;
-            left: {offsetX - 15}px;
-            top: {offsetY - 15}px;
+            left: {offsetX - SEGMENT_DOT_RADIUS_PIXELS}px;
+            top: {offsetY - SEGMENT_DOT_RADIUS_PIXELS}px;
             background: {PRESET_THEMES[name].iris};
             border-color: {isActive ? PRESET_THEMES[name].text : 'transparent'};
             box-shadow: {isActive
@@ -197,11 +207,11 @@
         'justify-center rounded-full text-center',
       )}
       style="
-        width: 88px;
-        height: 88px;
+        width: {CENTER_CIRCLE_SIZE_PIXELS}px;
+        height: {CENTER_CIRCLE_SIZE_PIXELS}px;
         background: color-mix(in srgb, var(--overlay) 92%, transparent);
         border: 1px solid var(--border-glass);
-        box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 12px 32px -8px rgb(0 0 0 / 50%);
       "
     >
       <span

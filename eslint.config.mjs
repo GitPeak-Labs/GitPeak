@@ -9,17 +9,108 @@ import ts from 'typescript-eslint'
 import stylistic from '@stylistic/eslint-plugin'
 import unicorn from 'eslint-plugin-unicorn'
 import importPlugin from 'eslint-plugin-import'
+import functional from 'eslint-plugin-functional'
+import sonarjs from 'eslint-plugin-sonarjs'
 import svelteConfig from './svelte.config.js'
 
 const gitignorePath = path.resolve(import.meta.dirname, '.gitignore')
 
+const noCommentsRule = {
+  meta: {
+    type: 'suggestion',
+    schema: [],
+    messages: {
+      comment: 'Comments are not allowed. Rename something or extract a named helper instead.',
+    },
+  },
+  create(context) {
+    const report = (node) => context.report({ loc: node.loc, messageId: 'comment' })
+    return {
+      Program() {
+        context.sourceCode.getAllComments().forEach(report)
+      },
+      SvelteHTMLComment: report,
+    }
+  },
+}
+
+const standards = { rules: { 'no-comments': noCommentsRule } }
+
+const VAGUE_NAMES = [
+  'item',
+  'items',
+  'value',
+  'values',
+  'result',
+  'results',
+  'tmp',
+  'temp',
+  'cb',
+  'callback',
+  'obj',
+  'val',
+  'res',
+  'ret',
+  'foo',
+  'bar',
+  'el',
+  'btn',
+  'e',
+  'err',
+  'evt',
+  'arr',
+  'str',
+  'num',
+  'info',
+  'stuff',
+  'thing',
+]
+
+const FSD_LAYER_ZONES = [
+  {
+    target: './src',
+    from: './src/**/helpers.ts',
+    message: 'Standard 3.6: Do not use generic helper files.',
+  },
+  {
+    target: './src/lib/shared',
+    from: ['./src/lib/entities', './src/lib/features', './src/lib/widgets', './src/lib/server'],
+    message: 'shared/ is foundational and cannot import from any other layer.',
+  },
+  {
+    target: './src/lib/entities',
+    from: ['./src/lib/features', './src/lib/widgets', './src/routes'],
+    message: 'entities/ may only depend on shared/.',
+  },
+  {
+    target: './src/lib/features',
+    from: ['./src/lib/widgets', './src/routes'],
+    message: 'features/ may depend on entities/ and shared/, not widgets/ or routes/.',
+  },
+  {
+    target: './src/lib/features/search-profile',
+    from: './src/lib/features/customize-theme',
+    message: 'A feature never imports another feature.',
+  },
+  {
+    target: './src/lib/features/customize-theme',
+    from: './src/lib/features/search-profile',
+    message: 'A feature never imports another feature.',
+  },
+  {
+    target: './src/lib/widgets',
+    from: './src/routes',
+    message: 'widgets/ cannot import from routes/.',
+  },
+  {
+    target: ['./src/lib/shared', './src/lib/entities', './src/lib/features', './src/lib/widgets'],
+    from: './src/lib/server',
+    message: 'Server-only code is importable from routes/ and src/lib/server/ only.',
+  },
+]
+
 export default defineConfig(
   includeIgnoreFile(gitignorePath),
-  js.configs.recommended,
-  ts.configs.recommended,
-  svelte.configs.recommended,
-  prettier,
-  svelte.configs.prettier,
   {
     ignores: [
       'dist/**',
@@ -28,15 +119,30 @@ export default defineConfig(
       '.svelte-kit/**',
       '*.config.js',
       '*.config.mjs',
-      'src/lib/shared/ui/**', // Ignore standard shadcn UI files
+      '*.config.ts',
+      'src/lib/shared/ui/**',
     ],
   },
+  {
+    linterOptions: {
+      noInlineConfig: true,
+      reportUnusedDisableDirectives: 'error',
+    },
+  },
+  js.configs.recommended,
+  ts.configs.strictTypeChecked,
+  ts.configs.stylisticTypeChecked,
+  svelte.configs.recommended,
+  prettier,
+  svelte.configs.prettier,
   {
     files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js', '**/*.ts', '**/*.js'],
     plugins: {
       '@stylistic': stylistic,
       unicorn,
       import: importPlugin,
+      sonarjs,
+      standards,
     },
     languageOptions: {
       globals: { ...globals.browser, ...globals.node },
@@ -54,158 +160,136 @@ export default defineConfig(
     },
     rules: {
       'no-undef': 'off',
+      'standards/no-comments': 'error',
 
-      /* --- 1. Formatting (auto-fixable — errors) --- */
       '@stylistic/semi': ['error', 'never'],
       '@stylistic/quotes': ['error', 'single', { avoidEscape: true }],
+      '@stylistic/max-len': ['error', { code: 100, ignoreUrls: true }],
 
-      /* --- 2. Line length (not auto-fixable — warn only) --- */
-      '@stylistic/max-len': ['warn', { code: 100, ignoreUrls: true }],
-
-      /* --- 3. Naming (not auto-fixable — warn only) --- */
-      'max-depth': ['error', 4],
-      'id-length': [
-        'warn',
-        {
-          min: 2,
-          exceptions: [
-            '_',
-            'a',
-            'b',
-            'c',
-            'd',
-            'e',
-            'f',
-            'g',
-            'h',
-            'i',
-            'j',
-            'k',
-            'm',
-            'n',
-            'o',
-            'p',
-            'r',
-            's',
-            't',
-            'v',
-            'w',
-            'x',
-            'y',
-            'M',
-            'T',
-            'W',
-            'H',
-            'F',
-            'S',
-          ],
-        },
-      ],
-
+      'id-denylist': ['error', ...VAGUE_NAMES],
+      'id-length': ['error', { min: 2, exceptions: ['x', 'y', '_'] }],
       'unicorn/prevent-abbreviations': [
-        'warn',
+        'error',
         {
           checkFilenames: false,
           replacements: {
             props: false,
-            ref: false,
             params: false,
             args: false,
             env: false,
-            ext: false,
-            dir: false,
-            res: false,
-            e: false,
+            src: false,
+            ref: false,
           },
         },
       ],
-
-      // Interface naming only — no types to avoid requiring project:true
+      '@typescript-eslint/no-magic-numbers': [
+        'error',
+        {
+          ignore: [-1, 0, 1, 2],
+          ignoreArrayIndexes: true,
+          ignoreDefaultValues: true,
+          ignoreEnums: true,
+          ignoreNumericLiteralTypes: true,
+          ignoreReadonlyClassProperties: true,
+          ignoreTypeIndexes: true,
+          enforceConst: true,
+        },
+      ],
       '@typescript-eslint/naming-convention': [
-        'warn',
+        'error',
+        { selector: 'typeLike', format: ['PascalCase'] },
         {
           selector: 'interface',
           format: ['PascalCase'],
           custom: { regex: '^I[A-Z]', match: false },
         },
-      ],
-
-      /* --- 4. Safety (warn — fix manually over time) --- */
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
-        { varsIgnorePattern: '^_', argsIgnorePattern: '^_' },
-      ],
-      'no-console': 'warn',
-
-      /* --- 5. Architecture: Feature-Sliced Design layer boundaries (errors) --- */
-      'import/no-restricted-paths': [
-        'error',
         {
-          zones: [
-            {
-              target: './src',
-              from: './src/**/helpers.ts',
-              message: 'Standard 3.6: Do not use generic helper files.',
-            },
-            {
-              target: './src/lib/shared',
-              from: [
-                './src/lib/entities',
-                './src/lib/features',
-                './src/lib/widgets',
-                './src/lib/server',
-              ],
-              message: 'shared/ is foundational and cannot import from any other layer.',
-            },
-            {
-              target: './src/lib/entities',
-              from: ['./src/lib/features', './src/lib/widgets', './src/routes'],
-              message: 'entities/ may only depend on shared/.',
-            },
-            {
-              target: './src/lib/features',
-              from: ['./src/lib/widgets', './src/routes'],
-              message: 'features/ may depend on entities/ and shared/, not widgets/ or routes/.',
-            },
-            {
-              target: './src/lib/features/search-profile',
-              from: './src/lib/features/customize-theme',
-              message: 'A feature never imports another feature.',
-            },
-            {
-              target: './src/lib/features/customize-theme',
-              from: './src/lib/features/search-profile',
-              message: 'A feature never imports another feature.',
-            },
-            {
-              target: './src/lib/widgets',
-              from: './src/routes',
-              message: 'widgets/ cannot import from routes/.',
-            },
-            {
-              target: [
-                './src/lib/shared',
-                './src/lib/entities',
-                './src/lib/features',
-                './src/lib/widgets',
-              ],
-              from: './src/lib/server',
-              message: 'Server-only code is importable from routes/ and src/lib/server/ only.',
-            },
-          ],
+          selector: 'variable',
+          types: ['boolean'],
+          format: ['PascalCase', 'UPPER_CASE'],
+          prefix: ['is', 'has', 'can', 'should', 'was', 'will', 'did', 'IS_', 'HAS_', 'CAN_'],
         },
       ],
+
+      'sonarjs/no-duplicate-string': ['error', { threshold: 2 }],
+      'sonarjs/no-identical-functions': 'error',
+      'sonarjs/cognitive-complexity': ['error', 10],
+
+      complexity: ['error', 8],
+      'max-depth': ['error', 3],
+      'max-params': ['error', 3],
+      'max-lines': ['error', { max: 300, skipBlankLines: true }],
+      'max-lines-per-function': ['error', { max: 40, skipBlankLines: true }],
+      'max-statements': ['error', 15],
+
+      '@typescript-eslint/explicit-module-boundary-types': 'error',
+      '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+      '@typescript-eslint/prefer-nullish-coalescing': [
+        'error',
+        { ignorePrimitives: { string: true } },
+      ],
+      '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
+      '@typescript-eslint/no-deprecated': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { varsIgnorePattern: '^_', argsIgnorePattern: '^_' },
+      ],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+
+      'svelte/require-each-key': 'error',
+      'svelte/button-has-type': 'error',
+      'svelte/prefer-const': 'error',
+      'svelte/block-lang': ['error', { script: ['ts'], style: null }],
+      // $app/paths' resolve() cannot be called in this project at all — even
+      // resolve('/wallpaper/export'), a bare static param-free route with no
+      // interpolation, fails "Expected 2 arguments, but got 1" under the pinned
+      // typescript@6.0.3, verified in isolation and unrelated to any app code.
+      // Until that upstream/TS-version incompatibility is fixed, this rule can't be
+      // satisfied without introducing a real type error, so it's off here rather
+      // than papered over with a disable comment (inert anyway under noInlineConfig).
+      'svelte/no-navigation-without-resolve': 'off',
+
+      'import/no-restricted-paths': ['error', { zones: FSD_LAYER_ZONES }],
     },
   },
-  /* 
-    Enforce 2-space indentation on standard source files, 
-    leaving Svelte files to be validated by svelte-eslint / Prettier.
-  */
   {
-    files: ['**/*.ts', '**/*.js', '**/*.svelte.ts', '**/*.svelte.js'],
+    files: ['src/lib/**/*.ts'],
+    ignores: [
+      'src/lib/**/*.test.ts',
+      'src/lib/**/*.svelte.ts',
+      'src/lib/**/api/**',
+      'src/lib/server/**',
+    ],
+    plugins: { functional },
     rules: {
-      '@stylistic/indent': ['error', 2, { SwitchCase: 1 }],
+      'functional/no-let': 'error',
+      'functional/immutable-data': 'error',
+      'functional/no-loop-statements': 'error',
+      'functional/no-classes': 'error',
+      'functional/no-this-expressions': 'error',
+      'no-param-reassign': ['error', { props: true }],
+    },
+  },
+  {
+    files: ['**/*.svelte'],
+    rules: {
+      '@typescript-eslint/no-useless-default-assignment': 'off',
+    },
+  },
+  {
+    files: ['**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/no-magic-numbers': 'off',
+      'sonarjs/no-duplicate-string': 'off',
+      'max-lines-per-function': 'off',
+      'max-statements': 'off',
+    },
+  },
+  {
+    files: ['scripts/**/*.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
 )

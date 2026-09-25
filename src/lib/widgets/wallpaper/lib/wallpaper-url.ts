@@ -3,12 +3,19 @@ import type { WallpaperFormat } from './wallpaper-formats'
 
 export const PREVIEW_AVATAR_SIZE_PIXELS = 160
 
-export function buildWallpaperUrl(
-  username: string,
-  format: WallpaperFormat,
-  presetName: string | null,
-  packedCustomTokens?: string,
-): string {
+type WallpaperUrlInput = {
+  username: string
+  format: WallpaperFormat
+  presetName: string | null
+  packedCustomTokens?: string
+}
+
+export function buildWallpaperUrl({
+  username,
+  format,
+  presetName,
+  packedCustomTokens,
+}: WallpaperUrlInput): string {
   const parameters = new URLSearchParams({ username, format: format.id })
 
   if (packedCustomTokens) parameters.set('t', packedCustomTokens)

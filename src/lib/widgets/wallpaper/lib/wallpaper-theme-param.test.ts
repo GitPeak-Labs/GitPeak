@@ -14,10 +14,10 @@ describe('packThemeTokens / parseThemeParameter', () => {
   })
 
   test('drops the leading hash when packing and restores it when parsing', () => {
-    const packed = packThemeTokens(PRESET_THEMES['Nord'])
+    const packed = packThemeTokens(PRESET_THEMES.Nord)
 
     expect(packed.startsWith('#')).toBe(false)
-    expect(parseThemeParameter(packed)?.base).toBe(PRESET_THEMES['Nord'].base)
+    expect(parseThemeParameter(packed)?.base).toBe(PRESET_THEMES.Nord.base)
   })
 
   test('returns null for empty, malformed, or wrong-length input', () => {
@@ -27,10 +27,10 @@ describe('packThemeTokens / parseThemeParameter', () => {
   })
 
   test('rejects a token that is not a hex colour', () => {
-    const values = packThemeTokens(PRESET_THEMES['Rosé Pine']).split('-')
-    values[3] = 'red);attr'
+    const tokenParts = packThemeTokens(PRESET_THEMES['Rosé Pine']).split('-')
+    const tamperedParts = tokenParts.map((part, index) => (index === 3 ? 'red);attr' : part))
 
-    expect(parseThemeParameter(values.join('-'))).toBeNull()
+    expect(parseThemeParameter(tamperedParts.join('-'))).toBeNull()
   })
 })
 

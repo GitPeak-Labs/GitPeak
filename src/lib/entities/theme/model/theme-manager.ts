@@ -161,6 +161,24 @@ export const TOKEN_LABELS: Record<string, string> = {
 
 const STORAGE_KEY = 'gitpeak-theme'
 const CUSTOM_TOKENS_KEY = 'gitpeak-theme-tokens'
+const DATA_THEME_ATTRIBUTE = 'data-theme'
+
+function isThemeTokens(candidate: unknown): candidate is ThemeTokens {
+  return (
+    typeof candidate === 'object' &&
+    candidate !== null &&
+    Object.values(candidate).every((tokenValue) => typeof tokenValue === 'string')
+  )
+}
+
+function applyStoredCustomTokens(raw: string): void {
+  try {
+    const parsedTokens: unknown = JSON.parse(raw)
+    if (isThemeTokens(parsedTokens)) applyTokens(parsedTokens)
+  } catch (error) {
+    console.error('Failed to parse saved theme tokens', error)
+  }
+}
 
 export function initTheme(): void {
   if (typeof window === 'undefined') return
@@ -168,30 +186,13 @@ export function initTheme(): void {
   const savedTheme = localStorage.getItem(STORAGE_KEY)
   if (!savedTheme) return
 
-  if (savedTheme === 'custom') {
-    const raw = localStorage.getItem(CUSTOM_TOKENS_KEY)
-    if (raw) {
-      try {
-        const tokens = JSON.parse(raw)
-        applyTokens(tokens)
-      } catch (e) {
-        console.error('Failed to parse saved theme tokens', e)
-      }
-    }
-  } else {
-    document.documentElement.setAttribute('data-theme', savedTheme)
+  if (savedTheme !== 'custom') {
+    document.documentElement.setAttribute(DATA_THEME_ATTRIBUTE, savedTheme)
+    return
   }
-}
 
-export function setTheme(themeName: string): void {
-  if (typeof window === 'undefined') return
-
-  localStorage.setItem(STORAGE_KEY, themeName)
-  localStorage.removeItem(CUSTOM_TOKENS_KEY)
-  document.documentElement.setAttribute('data-theme', themeName)
-
-  // Clear any inline styles that might be overriding the data-theme
-  document.documentElement.removeAttribute('style')
+  const raw = localStorage.getItem(CUSTOM_TOKENS_KEY)
+  if (raw) applyStoredCustomTokens(raw)
 }
 
 export function saveCustomTokens(tokens: ThemeTokens): void {
@@ -199,20 +200,23 @@ export function saveCustomTokens(tokens: ThemeTokens): void {
 
   localStorage.setItem(STORAGE_KEY, 'custom')
   localStorage.setItem(CUSTOM_TOKENS_KEY, JSON.stringify(tokens))
-  document.documentElement.removeAttribute('data-theme')
+  document.documentElement.removeAttribute(DATA_THEME_ATTRIBUTE)
 }
 
 export function getTokens(): ThemeTokens {
-  const tokens: ThemeTokens = {}
-  for (const key of Object.keys(TOKEN_LABELS))
-    tokens[key] = getComputedStyle(document.documentElement).getPropertyValue(`--${key}`).trim()
-
-  return tokens
+  return Object.keys(TOKEN_LABELS).reduce<ThemeTokens>(
+    (tokens, key) => ({
+      ...tokens,
+      [key]: getComputedStyle(document.documentElement).getPropertyValue(`--${key}`).trim(),
+    }),
+    {},
+  )
 }
 
 export function applyTokens(tokens: ThemeTokens): void {
-  for (const [key, value] of Object.entries(tokens))
-    document.documentElement.style.setProperty(`--${key}`, value)
+  Object.entries(tokens).forEach(([key, tokenValue]) => {
+    document.documentElement.style.setProperty(`--${key}`, tokenValue)
+  })
 }
 
 export function getSavedPresetName(): string | null {
@@ -221,26 +225,33 @@ export function getSavedPresetName(): string | null {
   return name === 'custom' ? null : name
 }
 
+function setTheme(themeName: string): void {
+  if (typeof window === 'undefined') return
+
+  localStorage.setItem(STORAGE_KEY, themeName)
+  localStorage.removeItem(CUSTOM_TOKENS_KEY)
+  document.documentElement.setAttribute(DATA_THEME_ATTRIBUTE, themeName)
+  document.documentElement.removeAttribute('style')
+}
+
 export function previewPreset(themeName: string): void {
   if (typeof window === 'undefined') return
-  document.documentElement.setAttribute('data-theme', themeName)
+  document.documentElement.setAttribute(DATA_THEME_ATTRIBUTE, themeName)
   document.documentElement.removeAttribute('style')
 }
 
 export function applyPreset(themeName: string): void {
   setTheme(themeName)
-  const tokens = PRESET_THEMES[themeName]
-  if (tokens) applyTokens(tokens)
+  if (Object.hasOwn(PRESET_THEMES, themeName)) applyTokens(PRESET_THEMES[themeName])
 }
 
 export function parseThemeFromCSS(cssText: string): ThemeTokens {
-  const tokens: ThemeTokens = {}
-  const matches = cssText.matchAll(/--([\w-]+):\s*([^;]+);/g)
+  const matches = [...cssText.matchAll(/--([\w-]+):\s*([^;]+);/g)]
 
-  for (const match of matches) {
+  return matches.reduce<ThemeTokens>((tokens, match) => {
     const key = match[1].trim()
-    if (TOKEN_LABELS[key]) tokens[key] = match[2].trim()
-  }
+    const tokenValue = match[2].trim()
 
-  return tokens
+    return TOKEN_LABELS[key] ? { ...tokens, [key]: tokenValue } : tokens
+  }, {})
 }

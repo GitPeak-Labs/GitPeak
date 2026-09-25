@@ -10,6 +10,9 @@ import notoSerifJp from './fonts/noto-serif-jp-400.ttf?url&inline'
 import notoSerifJpBold from './fonts/noto-serif-jp-700.ttf?url&inline'
 
 const fontFileCache = new Map<string, Promise<string>>()
+const JETBRAINS_MONO_FONT_FILENAME = 'gitpeak-jetbrains-mono-400.ttf'
+const NOTO_SANS_JP_FONT_FILENAME = 'gitpeak-noto-sans-jp-400.ttf'
+const NOTO_SERIF_JP_FONT_FILENAME = 'gitpeak-noto-serif-jp-400.ttf'
 
 function persistBundledFont(filename: string, dataUri: string): Promise<string> {
   const cached = fontFileCache.get(filename)
@@ -26,9 +29,6 @@ function persistBundledFont(filename: string, dataUri: string): Promise<string> 
   return promise
 }
 
-// resvg only accepts local TrueType paths in its Node renderer. The font bytes are bundled in the
-// server build and copied to the writable temp directory once per cold start—there are no request-
-// time font downloads. `serifJp` keeps mixed-script display names visually consistent.
 export function getOgFontFiles(): Promise<{
   mono: string
   serif: string
@@ -36,14 +36,14 @@ export function getOgFontFiles(): Promise<{
   serifJp: string
 }> {
   return Promise.all([
-    persistBundledFont('gitpeak-jetbrains-mono-400.ttf', jetBrainsMono),
+    persistBundledFont(JETBRAINS_MONO_FONT_FILENAME, jetBrainsMono),
     persistBundledFont('gitpeak-instrument-serif-400.ttf', instrumentSerif),
-    persistBundledFont('gitpeak-noto-sans-jp-400.ttf', notoSansJp),
-    persistBundledFont('gitpeak-noto-serif-jp-400.ttf', notoSerifJp),
+    persistBundledFont(NOTO_SANS_JP_FONT_FILENAME, notoSansJp),
+    persistBundledFont(NOTO_SERIF_JP_FONT_FILENAME, notoSerifJp),
   ]).then(([mono, serif, jp, serifJp]) => ({ mono, serif, jp, serifJp }))
 }
 
-export interface WallpaperFontFiles {
+export type WallpaperFontFiles = {
   mono: string
   bookSerif: string
   bookSerifBold: string
@@ -52,21 +52,13 @@ export interface WallpaperFontFiles {
   serifJpBold: string
 }
 
-// The wallpaper matches the live dashboard's actual `font-serif` look (a plain Georgia/Times
-// book-serif — Tailwind's `font-serif` utility isn't wired to Instrument Serif there, see
-// app.css), not the README/OG card's Instrument Serif treatment. Gelasio is a Google Fonts
-// metric- and shape-compatible substitute for Georgia, so this renders the same regardless of
-// the server's OS instead of depending on whatever system serif happens to be installed.
-// Both weights are registered for the CJK fallback too — requesting font-weight 700 text with
-// only a 400-weight CJK file registered leaves resvg unable to match that family+weight combo for
-// CJK glyphs specifically, and it falls back badly for just those characters.
 export function getWallpaperFontFiles(): Promise<WallpaperFontFiles> {
   return Promise.all([
-    persistBundledFont('gitpeak-jetbrains-mono-400.ttf', jetBrainsMono),
+    persistBundledFont(JETBRAINS_MONO_FONT_FILENAME, jetBrainsMono),
     persistBundledFont('gitpeak-gelasio-400.ttf', gelasio),
     persistBundledFont('gitpeak-gelasio-700.ttf', gelasioBold),
-    persistBundledFont('gitpeak-noto-sans-jp-400.ttf', notoSansJp),
-    persistBundledFont('gitpeak-noto-serif-jp-400.ttf', notoSerifJp),
+    persistBundledFont(NOTO_SANS_JP_FONT_FILENAME, notoSansJp),
+    persistBundledFont(NOTO_SERIF_JP_FONT_FILENAME, notoSerifJp),
     persistBundledFont('gitpeak-noto-serif-jp-700.ttf', notoSerifJpBold),
   ]).then(([mono, bookSerif, bookSerifBold, jp, serifJp, serifJpBold]) => ({
     mono,
