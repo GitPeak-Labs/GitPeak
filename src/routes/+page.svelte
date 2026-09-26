@@ -41,12 +41,12 @@
       content={`Peek at ${usernameFromUrl}'s GitHub profile statistics, ` +
         'languages, and top repositories.'}
     />
-    <meta property="og:image" content="{page.url.origin}/og?username={usernameFromUrl}&v=1" />
+    <meta property="og:image" content="{page.url.origin}/og?username={usernameFromUrl}&v=2" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="{usernameFromUrl}'s GitHub Statistics | GitPeak" />
-    <meta name="twitter:image" content="{page.url.origin}/og?username={usernameFromUrl}&v=1" />
+    <meta name="twitter:image" content="{page.url.origin}/og?username={usernameFromUrl}&v=2" />
   {:else}
     <title>GitPeak — Peek at any GitHub profile, beautifully</title>
     <meta property="og:type" content="website" />
