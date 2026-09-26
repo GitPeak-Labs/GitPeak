@@ -19,7 +19,7 @@ const HEX_CHANNEL_LENGTH = 2
 const HEX_CHANNEL_STARTS = [0, HEX_CHANNEL_LENGTH, HEX_CHANNEL_LENGTH * 2]
 
 export const LEGEND_FONT_SIZE = 12
-export const LEGEND_NAME_INSET = 16
+const LEGEND_NAME_INSET = 16
 export const LEGEND_WRAP_LINE_HEIGHT = 15
 const MAX_LEGEND_ROW_STEP = 32
 const MAX_NAME_LINES = 2
@@ -43,6 +43,9 @@ type ReadmeLegend = {
 type PositionedLegendRow = LegendRow & {
   nameLines: string[]
   baselineY: number
+  fontSize: number
+  nameInset: number
+  wrapLineHeight: number
 }
 
 type LegendLayoutInput = {
@@ -50,6 +53,7 @@ type LegendLayoutInput = {
   legendWidth: number
   centerY: number
   maxSpan: number
+  scale: number
 }
 
 function parseHexChannels(hexColor: string): number[] {
@@ -102,37 +106,43 @@ export function buildReadmeLegend(languages: GitHubLanguage[], theme: ThemeToken
   return { slices, rows }
 }
 
-function legendNameBudget(legendWidth: number): number {
-  const availableChars = Math.floor(
-    (legendWidth - LEGEND_NAME_INSET) / (LEGEND_FONT_SIZE * MONO_ADVANCE_EM),
-  )
+function legendNameBudget(legendWidth: number, fontSize: number, nameInset: number): number {
+  const availableChars = Math.floor((legendWidth - nameInset) / (fontSize * MONO_ADVANCE_EM))
   return availableChars - PERCENT_LABEL_CHARS - NAME_TO_PERCENT_GAP_CHARS
 }
 
-function extraLineHeight(nameLines: string[]): number {
-  return (nameLines.length - 1) * LEGEND_WRAP_LINE_HEIGHT
+function extraLineHeight(nameLines: string[], wrapLineHeight: number): number {
+  return (nameLines.length - 1) * wrapLineHeight
 }
 
 export function layoutLegendRows(layout: LegendLayoutInput): PositionedLegendRow[] {
-  const nameBudget = legendNameBudget(layout.legendWidth)
+  const fontSize = LEGEND_FONT_SIZE * layout.scale
+  const nameInset = LEGEND_NAME_INSET * layout.scale
+  const wrapLineHeight = LEGEND_WRAP_LINE_HEIGHT * layout.scale
+  const maxRowStep = MAX_LEGEND_ROW_STEP * layout.scale
+
+  const nameBudget = legendNameBudget(layout.legendWidth, fontSize, nameInset)
   const nameLinesPerRow = layout.rows.map((row) => wrapName(row.name, nameBudget, MAX_NAME_LINES))
   const totalExtraHeight = nameLinesPerRow.reduce(
-    (height, nameLines) => height + extraLineHeight(nameLines),
+    (height, nameLines) => height + extraLineHeight(nameLines, wrapLineHeight),
     0,
   )
   const gapCount = Math.max(layout.rows.length - 1, 1)
-  const rowStep = Math.min(MAX_LEGEND_ROW_STEP, (layout.maxSpan - totalExtraHeight) / gapCount)
+  const rowStep = Math.min(maxRowStep, (layout.maxSpan - totalExtraHeight) / gapCount)
   const rowOffsets = startOffsets(
-    nameLinesPerRow.map((nameLines) => rowStep + extraLineHeight(nameLines)),
+    nameLinesPerRow.map((nameLines) => rowStep + extraLineHeight(nameLines, wrapLineHeight)),
   )
 
   const lastNameLines = nameLinesPerRow.at(-1) ?? []
-  const legendSpan = (rowOffsets.at(-1) ?? 0) + extraLineHeight(lastNameLines)
-  const firstBaselineY = layout.centerY - legendSpan / 2 + LEGEND_FONT_SIZE * CAP_HEIGHT_EM
+  const legendSpan = (rowOffsets.at(-1) ?? 0) + extraLineHeight(lastNameLines, wrapLineHeight)
+  const firstBaselineY = layout.centerY - legendSpan / 2 + fontSize * CAP_HEIGHT_EM
 
   return layout.rows.map((row, index) => ({
     ...row,
     nameLines: nameLinesPerRow[index],
     baselineY: firstBaselineY + rowOffsets[index],
+    fontSize,
+    nameInset,
+    wrapLineHeight,
   }))
 }

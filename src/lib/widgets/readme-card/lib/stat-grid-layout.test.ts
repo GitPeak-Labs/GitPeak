@@ -5,8 +5,8 @@ import { layoutStatGrid } from './stat-grid-layout'
 
 const THEME = PRESET_THEMES['Rosé Pine']
 const BOUNDS = { x: 500, y: 130, width: 340, height: 274 }
-const TALL_GRID_HEIGHT = 442
-const MAX_HERO_ROW_HEIGHT = 112
+const TALL_GRID_HEIGHT = 600
+const MAX_HERO_ROW_HEIGHT = 180
 
 const STATS: GithubStats = {
   displayName: null,
@@ -77,5 +77,28 @@ describe('layoutStatGrid', () => {
   test('colors each card with its stat accent', () => {
     expect(cards[0].accentColor).toBe(THEME.foam)
     expect(cards[2].accentColor).toBe(THEME.gold)
+  })
+
+  test('keeps the underline bar inside its own card at a small and a large card size', () => {
+    const largeCards = layoutStatGrid({
+      statistics: STATS,
+      theme: THEME,
+      bounds: { ...BOUNDS, width: 472, height: 407 },
+    })
+
+    const allCards = [...cards, ...largeCards]
+    allCards.forEach((card) => {
+      expect(card.barOffsetY + card.barHeight).toBeLessThanOrEqual(card.height)
+    })
+  })
+
+  test('scales the count font size up as the card grows taller', () => {
+    const largeCards = layoutStatGrid({
+      statistics: STATS,
+      theme: THEME,
+      bounds: { ...BOUNDS, width: 472, height: 407 },
+    })
+
+    expect(largeCards[0].countFontSize).toBeGreaterThan(cards[0].countFontSize)
   })
 })

@@ -2,13 +2,7 @@
   import type { GitHubLanguage } from '$lib/entities/github-stats/model/github-stats'
   import type { ThemeTokens } from '$lib/entities/theme/model/theme-manager'
   import { generateArcPath } from '$lib/shared/lib/pie-geometry'
-  import {
-    LEGEND_FONT_SIZE,
-    LEGEND_NAME_INSET,
-    LEGEND_WRAP_LINE_HEIGHT,
-    buildReadmeLegend,
-    layoutLegendRows,
-  } from '../lib/language-legend'
+  import { buildReadmeLegend, layoutLegendRows } from '../lib/language-legend'
   import {
     SWEEP_BEGIN_SECONDS,
     buildSweepRevealMask,
@@ -22,6 +16,7 @@
     x,
     centerY,
     width,
+    shouldShowAvatar = true,
   }: {
     languages: GitHubLanguage[]
     theme: ThemeTokens
@@ -29,32 +24,54 @@
     x: number
     centerY: number
     width: number
+    shouldShowAvatar?: boolean
   } = $props()
 
-  const OUTER_RADIUS = 104
-  const INNER_RADIUS = 66
-  const RING_THICKNESS = OUTER_RADIUS - INNER_RADIUS
-  const RING_MIDLINE_RADIUS = (OUTER_RADIUS + INNER_RADIUS) / 2
-  const AVATAR_RADIUS_INSET = 5
-  const AVATAR_RADIUS = INNER_RADIUS - AVATAR_RADIUS_INSET
-  const SWEEP_MASK_RADIUS_PADDING = 12
-  const SWEEP_MASK_RADIUS = OUTER_RADIUS + SWEEP_MASK_RADIUS_PADDING
-  const LEGEND_GAP = 28
-  const LEGEND_MAX_SPAN_PADDING = 36
-  const LEGEND_MAX_SPAN = OUTER_RADIUS * 2 + LEGEND_MAX_SPAN_PADDING
-  const LEGEND_DOT_RADIUS = 4
+  const BASE_WIDTH = 404
+  const BASE_OUTER_RADIUS = 104
+  const BASE_INNER_RADIUS = 66
+  const BASE_AVATAR_RADIUS_INSET = 5
+  const BASE_SWEEP_MASK_RADIUS_PADDING = 12
+  const BASE_LEGEND_GAP = 28
+  const BASE_LEGEND_MAX_SPAN_PADDING = 36
+  const BASE_LEGEND_DOT_RADIUS = 4
   const LEGEND_ROW_DELAY_SECONDS = 0.5
   const LEGEND_ROW_STAGGER_SECONDS = 0.04
   const FOLDED_ROW_OPACITY = 0.6
+  const HOLE_COUNT_FONT_RATIO = 0.85
+  const HOLE_LABEL_FONT_RATIO = 0.22
+  const HOLE_COUNT_BASELINE_OFFSET_RATIO = -0.08
+  const HOLE_LABEL_BASELINE_OFFSET_RATIO = 0.45
 
-  const centerX = $derived(x + OUTER_RADIUS)
+  const scale = $derived(width / BASE_WIDTH)
+  const outerRadius = $derived(BASE_OUTER_RADIUS * scale)
+  const innerRadius = $derived(BASE_INNER_RADIUS * scale)
+  const ringThickness = $derived(outerRadius - innerRadius)
+  const ringMidlineRadius = $derived((outerRadius + innerRadius) / 2)
+  const avatarRadius = $derived(innerRadius - BASE_AVATAR_RADIUS_INSET * scale)
+  const sweepMaskRadius = $derived(outerRadius + BASE_SWEEP_MASK_RADIUS_PADDING * scale)
+  const legendGap = $derived(BASE_LEGEND_GAP * scale)
+  const legendMaxSpan = $derived(outerRadius * 2 + BASE_LEGEND_MAX_SPAN_PADDING * scale)
+  const legendDotRadius = $derived(BASE_LEGEND_DOT_RADIUS * scale)
+
+  const centerX = $derived(x + outerRadius)
   const legend = $derived(buildReadmeLegend(languages, theme))
-  const legendX = $derived(centerX + OUTER_RADIUS + LEGEND_GAP)
+  const legendX = $derived(centerX + outerRadius + legendGap)
   const legendWidth = $derived(x + width - legendX)
   const legendRows = $derived(
-    layoutLegendRows({ rows: legend.rows, legendWidth, centerY, maxSpan: LEGEND_MAX_SPAN }),
+    layoutLegendRows({
+      rows: legend.rows,
+      legendWidth,
+      centerY,
+      maxSpan: legendMaxSpan,
+      scale,
+    }),
   )
-  const sweepMask = $derived(buildSweepRevealMask({ centerX, centerY, radius: SWEEP_MASK_RADIUS }))
+  const sweepMask = $derived(buildSweepRevealMask({ centerX, centerY, radius: sweepMaskRadius }))
+  const holeCountFontSize = $derived(avatarRadius * HOLE_COUNT_FONT_RATIO)
+  const holeLabelFontSize = $derived(avatarRadius * HOLE_LABEL_FONT_RATIO)
+  const holeCountBaselineY = $derived(centerY + avatarRadius * HOLE_COUNT_BASELINE_OFFSET_RATIO)
+  const holeLabelBaselineY = $derived(centerY + avatarRadius * HOLE_LABEL_BASELINE_OFFSET_RATIO)
 </script>
 
 <defs>
@@ -71,10 +88,10 @@
   <mask
     id="lang-sweep-mask"
     maskUnits="userSpaceOnUse"
-    x={centerX - SWEEP_MASK_RADIUS}
-    y={centerY - SWEEP_MASK_RADIUS}
-    width={SWEEP_MASK_RADIUS * 2}
-    height={SWEEP_MASK_RADIUS * 2}
+    x={centerX - sweepMaskRadius}
+    y={centerY - sweepMaskRadius}
+    width={sweepMaskRadius * 2}
+    height={sweepMaskRadius * 2}
   >
     <path d={sweepMask.finalPath} fill="white">
       <animate
@@ -89,18 +106,18 @@
     </path>
   </mask>
   <clipPath id="lang-avatar-clip">
-    <circle cx={centerX} cy={centerY} r={AVATAR_RADIUS} />
+    <circle cx={centerX} cy={centerY} r={avatarRadius} />
   </clipPath>
 </defs>
 
 <circle
   cx={centerX}
   cy={centerY}
-  r={RING_MIDLINE_RADIUS}
+  r={ringMidlineRadius}
   fill="none"
   stroke={theme.text}
   stroke-opacity="0.06"
-  stroke-width={RING_THICKNESS}
+  stroke-width={ringThickness}
 />
 
 {#if legend.slices.length > 0}
@@ -111,8 +128,8 @@
           d={generateArcPath({
             centerX,
             centerY,
-            outerRadius: OUTER_RADIUS,
-            innerRadius: INNER_RADIUS,
+            outerRadius,
+            innerRadius,
             startAngle: slice.startAngleDegrees,
             endAngle: slice.endAngleDegrees,
           })}
@@ -130,22 +147,42 @@
   </g>
 {/if}
 
-<circle cx={centerX} cy={centerY} r={AVATAR_RADIUS} fill={theme.surface} />
-{#if avatarDataUri}
+<circle cx={centerX} cy={centerY} r={avatarRadius} fill={theme.surface} />
+{#if shouldShowAvatar && avatarDataUri}
   <image
-    x={centerX - AVATAR_RADIUS}
-    y={centerY - AVATAR_RADIUS}
-    width={AVATAR_RADIUS * 2}
-    height={AVATAR_RADIUS * 2}
+    x={centerX - avatarRadius}
+    y={centerY - avatarRadius}
+    width={avatarRadius * 2}
+    height={avatarRadius * 2}
     href={avatarDataUri}
     clip-path="url(#lang-avatar-clip)"
     preserveAspectRatio="xMidYMid slice"
   />
+{:else if !shouldShowAvatar}
+  <text
+    x={centerX}
+    y={holeCountBaselineY}
+    class="text-serif"
+    font-size={holeCountFontSize}
+    text-anchor="middle"
+  >
+    {legend.slices.length}
+  </text>
+  <text
+    x={centerX}
+    y={holeLabelBaselineY}
+    class="text-main"
+    font-size={holeLabelFontSize}
+    text-anchor="middle"
+    style="fill:{theme.subtle}"
+  >
+    languages
+  </text>
 {/if}
 <circle
   cx={centerX}
   cy={centerY}
-  r={AVATAR_RADIUS}
+  r={avatarRadius}
   fill="none"
   stroke={theme.base}
   stroke-width="3"
@@ -158,17 +195,17 @@
     opacity={row.isFoldedRemainder ? FOLDED_ROW_OPACITY : 1}
   >
     <circle
-      cx={legendX + LEGEND_DOT_RADIUS}
-      cy={row.baselineY - LEGEND_DOT_RADIUS}
-      r={LEGEND_DOT_RADIUS}
+      cx={legendX + legendDotRadius}
+      cy={row.baselineY - legendDotRadius}
+      r={legendDotRadius}
       fill={row.color}
     />
     {#each row.nameLines as nameLine, lineIndex (lineIndex)}
       <text
-        x={legendX + LEGEND_NAME_INSET}
-        y={row.baselineY + lineIndex * LEGEND_WRAP_LINE_HEIGHT}
+        x={legendX + row.nameInset}
+        y={row.baselineY + lineIndex * row.wrapLineHeight}
         class="text-main"
-        font-size={LEGEND_FONT_SIZE}
+        font-size={row.fontSize}
       >
         {nameLine}
       </text>
@@ -177,7 +214,7 @@
       x={legendX + legendWidth}
       y={row.baselineY}
       class="text-main"
-      font-size={LEGEND_FONT_SIZE}
+      font-size={row.fontSize}
       text-anchor="end"
       style="fill:{theme.subtle}"
     >

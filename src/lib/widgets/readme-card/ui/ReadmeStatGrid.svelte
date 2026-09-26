@@ -22,26 +22,6 @@
     isBoxed?: boolean
   } = $props()
 
-  const HERO_CARD_STYLE = {
-    cornerRadius: 16,
-    inset: 20,
-    labelBaselineY: 32,
-    countBaselineY: 74,
-    countFontSize: 38,
-    barOffsetY: 86,
-    barWidth: 48,
-    barHeight: 3,
-  }
-  const DETAIL_CARD_STYLE = {
-    cornerRadius: 14,
-    inset: 16,
-    labelBaselineY: 24,
-    countBaselineY: 54,
-    countFontSize: 26,
-    barOffsetY: 62,
-    barWidth: 36,
-    barHeight: 2,
-  }
   const CARD_REVEAL_DELAY_SECONDS = 0.3
   const CARD_STAGGER_SECONDS = 0.07
   const BAR_GROW_LAG_SECONDS = 0.25
@@ -50,10 +30,9 @@
 </script>
 
 {#each cards as card, cardIndex (card.label)}
-  {@const cardStyle = card.isHero ? HERO_CARD_STYLE : DETAIL_CARD_STYLE}
   {@const revealSeconds = CARD_REVEAL_DELAY_SECONDS + cardIndex * CARD_STAGGER_SECONDS}
-  {@const contentX = isBoxed ? card.x + cardStyle.inset : card.x}
-  {@const barY = card.y + cardStyle.barOffsetY}
+  {@const contentX = isBoxed ? card.x + card.inset : card.x}
+  {@const barY = card.y + card.barOffsetY}
 
   <g class="anim-row" style="animation-delay:{revealSeconds}s">
     {#if isBoxed}
@@ -62,7 +41,7 @@
         y={card.y}
         width={card.width}
         height={card.height}
-        rx={cardStyle.cornerRadius}
+        rx={card.cornerRadius}
         fill={theme.surface}
         fill-opacity="0.6"
         stroke={theme.subtle}
@@ -70,22 +49,22 @@
         filter="url(#glass-shadow)"
       />
     {/if}
-    <text x={contentX} y={card.y + cardStyle.labelBaselineY} class="text-subtle">
+    <text x={contentX} y={card.y + card.labelBaselineY} class="text-subtle">
       {card.label}
     </text>
     <ReadmeCountUp
       finalCount={card.count}
       beginSeconds={revealSeconds}
       x={contentX}
-      y={card.y + cardStyle.countBaselineY}
-      fontSize={cardStyle.countFontSize}
+      y={card.y + card.countBaselineY}
+      fontSize={card.countFontSize}
     />
     <rect
       x={contentX}
       y={barY}
-      width={cardStyle.barWidth}
-      height={cardStyle.barHeight}
-      rx={cardStyle.barHeight / 2}
+      width={card.barWidth}
+      height={card.barHeight}
+      rx={card.barHeight / 2}
       fill={card.accentColor}
       class="anim-grow"
       style="transform-origin:{contentX}px {barY}px; animation-delay:{revealSeconds +

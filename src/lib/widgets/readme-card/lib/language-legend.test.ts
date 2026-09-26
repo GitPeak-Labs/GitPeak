@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { PRESET_THEMES } from '$lib/entities/theme/model/theme-manager'
 import {
+  LEGEND_FONT_SIZE,
   LEGEND_WRAP_LINE_HEIGHT,
   buildReadmeLegend,
   layoutLegendRows,
@@ -47,7 +48,7 @@ describe('buildReadmeLegend', () => {
 })
 
 describe('layoutLegendRows', () => {
-  const layout = { legendWidth: 168, centerY: 200, maxSpan: 244 }
+  const layout = { legendWidth: 168, centerY: 200, maxSpan: 244, scale: 1 }
 
   test('wraps a long name onto a second line instead of cutting it', () => {
     const [row] = layoutLegendRows({ ...layout, rows: [legendRow('Jupyter Notebook Extended')] })
@@ -79,5 +80,11 @@ describe('layoutLegendRows', () => {
 
   test('returns nothing for an empty legend', () => {
     expect(layoutLegendRows({ ...layout, rows: [] })).toEqual([])
+  })
+
+  test('scales the legend typography up with the given scale factor', () => {
+    const [row] = layoutLegendRows({ ...layout, rows: [legendRow('Go')], scale: 1.5 })
+
+    expect(row.fontSize).toBeCloseTo(LEGEND_FONT_SIZE * 1.5, 6)
   })
 })
