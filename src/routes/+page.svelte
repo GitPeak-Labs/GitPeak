@@ -33,6 +33,8 @@
 <svelte:head>
   {#if usernameFromUrl}
     <title>{usernameFromUrl}'s GitHub Statistics | GitPeak</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={page.url.href} />
     <meta property="og:title" content="{usernameFromUrl}'s GitHub Statistics | GitPeak" />
     <meta
       property="og:description"
@@ -47,6 +49,8 @@
     <meta name="twitter:image" content="{page.url.origin}/og?username={usernameFromUrl}&v=1" />
   {:else}
     <title>GitPeak — Peek at any GitHub profile, beautifully</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={page.url.href} />
     <meta property="og:title" content="GitPeak — Peek at any GitHub profile, beautifully" />
     <meta property="og:image" content="{page.url.origin}/favicon.svg" />
   {/if}
