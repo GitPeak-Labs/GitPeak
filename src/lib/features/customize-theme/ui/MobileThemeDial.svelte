@@ -17,7 +17,6 @@
   const RING_RADIUS_PIXELS = 104
   const FAB_SIZE_PIXELS = 52
   const TAP_THRESHOLD_DEGREES = 8
-  const FAB_PRESSED_SCALE = 0.85
   const PALETTE_ICON_SIZE = 20
   const CENTER_CIRCLE_SIZE_PIXELS = 88
   const INDICATOR_OFFSET_PIXELS = 20
@@ -115,19 +114,11 @@
   type="button"
   aria-label="Cycle theme, rotate the dial to pick a preset"
   class={cn(
-    'glass flex touch-none items-center justify-center rounded-full',
-    'border shadow-lg select-none',
+    'fab glass glass-float flex touch-none items-center justify-center rounded-full',
+    'border select-none',
   )}
-  style="
-    width: {FAB_SIZE_PIXELS}px;
-    height: {FAB_SIZE_PIXELS}px;
-    color: var(--iris);
-    border-color: var(--border-glass);
-    background: color-mix(in srgb, var(--overlay) 92%, transparent);
-    opacity: {isOpen ? 0 : 1};
-    transform: scale({isOpen ? FAB_PRESSED_SCALE : 1});
-    transition: opacity 160ms ease, transform 160ms ease;
-  "
+  data-open={isOpen || undefined}
+  style:--fab-size="{FAB_SIZE_PIXELS}px"
   onpointerdown={handlePointerDown}
   onpointermove={handlePointerMove}
   onpointerup={handlePointerUp}
@@ -138,42 +129,23 @@
 
 {#if isOpen}
   <div
-    class="pointer-events-none fixed z-50"
-    style="left: {centerX}px; top: {centerY}px;"
+    class="dial pointer-events-none fixed z-50"
+    style:left="{centerX}px"
+    style:top="{centerY}px"
+    style:--ring-radius="{RING_RADIUS_PIXELS}px"
+    style:--indicator-offset="{INDICATOR_OFFSET_PIXELS}px"
+    style:--dot-size="{SEGMENT_DOT_RADIUS_PIXELS * 2}px"
+    style:--center-size="{CENTER_CIRCLE_SIZE_PIXELS}px"
     transition:scale={{ duration: 220, start: FAB_SIZE_PIXELS / CENTER_CIRCLE_SIZE_PIXELS }}
   >
-    <div
-      class="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
-      style="
-        width: {RING_RADIUS_PIXELS * 2}px;
-        height: {RING_RADIUS_PIXELS * 2}px;
-        left: 0;
-        top: 0;
-        border: 1px solid var(--border-glass-faint);
-        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--base) 40%, transparent);
-      "
-    ></div>
+    <div class="dial-ring absolute -translate-x-1/2 -translate-y-1/2 rounded-full"></div>
+
+    <div class="dial-indicator absolute -translate-x-1/2 -translate-y-1/2 rounded-full"></div>
 
     <div
-      class="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
-      style="
-        width: 10px;
-        height: 10px;
-        left: 0;
-        top: {-RING_RADIUS_PIXELS - INDICATOR_OFFSET_PIXELS}px;
-        background: var(--iris);
-        box-shadow: 0 0 8px 1px color-mix(in srgb, var(--iris) 70%, transparent);
-      "
-    ></div>
-
-    <div
-      class="absolute"
-      style="
-        left: 0;
-        top: 0;
-        transform: rotate({rotationDegrees}deg);
-        transition: {isDragging ? 'none' : 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)'};
-      "
+      class="dial-rotor absolute"
+      data-dragging={isDragging || undefined}
+      style:transform="rotate({rotationDegrees}deg)"
     >
       {#each presetNames as name, index (name)}
         {@const angleRadians = (index * SEGMENT_DEGREES * Math.PI) / HALF_CIRCLE_DEGREES}
@@ -182,44 +154,101 @@
         {@const isActive = activeIndex === index}
         <div
           class={cn(
-            'absolute rounded-full border-2 transition-all duration-150',
+            'dial-dot absolute rounded-full border-2 transition-all duration-150',
             isActive ? 'scale-125' : 'scale-100 opacity-70',
           )}
-          style="
-            width: 30px;
-            height: 30px;
-            left: {offsetX - SEGMENT_DOT_RADIUS_PIXELS}px;
-            top: {offsetY - SEGMENT_DOT_RADIUS_PIXELS}px;
-            background: {PRESET_THEMES[name].iris};
-            border-color: {isActive ? PRESET_THEMES[name].text : 'transparent'};
-            box-shadow: {isActive
-            ? `0 0 12px 1px color-mix(in srgb, ${PRESET_THEMES[name].iris} 55%, transparent)`
-            : 'none'};
-            transform: rotate({-rotationDegrees}deg);
-          "
+          data-active={isActive || undefined}
+          style:left="{offsetX - SEGMENT_DOT_RADIUS_PIXELS}px"
+          style:top="{offsetY - SEGMENT_DOT_RADIUS_PIXELS}px"
+          style:--dot-iris={PRESET_THEMES[name].iris}
+          style:--dot-text={PRESET_THEMES[name].text}
+          style:transform="rotate({-rotationDegrees}deg)"
         ></div>
       {/each}
     </div>
 
     <div
       class={cn(
-        'glass absolute flex -translate-x-1/2 -translate-y-1/2 items-center',
-        'justify-center rounded-full text-center',
+        'dial-center glass glass-float absolute flex -translate-x-1/2 -translate-y-1/2',
+        'items-center justify-center rounded-full text-center',
       )}
-      style="
-        width: {CENTER_CIRCLE_SIZE_PIXELS}px;
-        height: {CENTER_CIRCLE_SIZE_PIXELS}px;
-        background: color-mix(in srgb, var(--overlay) 92%, transparent);
-        border: 1px solid var(--border-glass);
-        box-shadow: 0 12px 32px -8px rgb(0 0 0 / 50%);
-      "
     >
-      <span
-        class="px-2 font-mono text-[0.5625rem] tracking-[0.18em] uppercase"
-        style="color: var(--subtle)"
-      >
+      <span class="dial-label px-2 font-mono text-[0.5625rem] tracking-[0.18em] uppercase">
         {presetNames[activeIndex]}
       </span>
     </div>
   </div>
 {/if}
+
+<style>
+  .fab {
+    width: var(--fab-size);
+    height: var(--fab-size);
+    color: var(--iris);
+    transition:
+      opacity 160ms ease,
+      transform 160ms ease;
+  }
+
+  .fab[data-open] {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+
+  .fab,
+  .dial-center {
+    background: var(--surface-floating);
+    border-color: var(--border-glass);
+  }
+
+  .dial-ring {
+    width: calc(var(--ring-radius) * 2);
+    height: calc(var(--ring-radius) * 2);
+    left: 0;
+    top: 0;
+    border: 1px solid var(--border-glass-faint);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--base) 40%, transparent);
+  }
+
+  .dial-indicator {
+    width: 10px;
+    height: 10px;
+    left: 0;
+    top: calc(-1 * (var(--ring-radius) + var(--indicator-offset)));
+    background: var(--iris);
+    box-shadow: 0 0 8px 1px color-mix(in srgb, var(--iris) 70%, transparent);
+  }
+
+  .dial-rotor {
+    left: 0;
+    top: 0;
+    transition: transform 220ms var(--ease-out-expo);
+  }
+
+  .dial-rotor[data-dragging] {
+    transition: none;
+  }
+
+  .dial-dot {
+    width: var(--dot-size);
+    height: var(--dot-size);
+    background: var(--dot-iris);
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .dial-dot[data-active] {
+    border-color: var(--dot-text);
+    box-shadow: 0 0 12px 1px color-mix(in srgb, var(--dot-iris) 55%, transparent);
+  }
+
+  .dial-center {
+    width: var(--center-size);
+    height: var(--center-size);
+    box-shadow: var(--shadow-float);
+  }
+
+  .dial-label {
+    color: var(--subtle);
+  }
+</style>

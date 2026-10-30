@@ -17,18 +17,13 @@
 </script>
 
 <Card
+  variant="glass"
   class={cn(
-    'glass relative isolate overflow-hidden rounded-2xl [clip-path:inset(0_round_1rem)]',
+    'relative isolate rounded-2xl',
     'transition-[border-color,box-shadow,transform] duration-180 ease-out hover:-translate-y-px',
   )}
 >
-  <div
-    class={cn(
-      'pointer-events-none absolute inset-0 overflow-hidden rounded-2xl',
-      '[clip-path:inset(0_round_1rem)]',
-    )}
-    aria-hidden="true"
-  >
+  <div class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl" aria-hidden="true">
     <div
       class={cn(
         'bg-[color-mix(in_srgb,var(--iris)_15%,transparent)]',

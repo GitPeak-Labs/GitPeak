@@ -29,7 +29,7 @@
       <div class="grid grid-cols-3 gap-2 sm:gap-2.5">
         {#each [0, 1, 2, 3, 4, 5] as itemIndex (itemIndex)}
           <div
-            class="shimmer h-20 rounded-[14px] [animation-delay:var(--delay)]"
+            class="shimmer h-20 rounded-xl [animation-delay:var(--delay)]"
             style="--delay: {(index + itemIndex) * 60}ms;"
           ></div>
         {/each}

@@ -2,7 +2,7 @@
   import type { Component } from 'svelte'
   import type { StatItem } from '$lib/entities/github-stats/model/stat-items'
   import type { TiltState } from '$lib/shared/lib/mouse-tilt'
-  import { tiltStyle, shineStyle } from '$lib/shared/lib/mouse-tilt'
+  import { TILT_TRANSFORM_STYLE } from '$lib/shared/lib/mouse-tilt'
   import { formatNumber } from '$lib/shared/lib/number-formatting'
   import * as Card from '$lib/shared/ui/card'
   import { cn } from '$lib/shared/lib/class-merger'
@@ -34,7 +34,7 @@
       glow: true,
     },
     detail: {
-      cardClass: 'rounded-[14px] last:col-span-2 sm:last:col-span-1',
+      cardClass: 'rounded-xl last:col-span-2 sm:last:col-span-1',
       contentClass: 'relative z-10 flex flex-col gap-1.5 p-[10px_12px] sm:gap-2 sm:p-[12px_14px]',
       labelClass: cn(TRUNCATED_LABEL_CLASS, 'tracking-wider uppercase sm:tracking-widest'),
       iconWrapClass: cn(
@@ -79,15 +79,12 @@
 
 <Card.Root
   role="presentation"
-  class={cn(
-    'tilt-card glass relative cursor-default overflow-hidden',
-    'border-0 bg-transparent shadow-none select-none',
-    style.cardClass,
-  )}
+  variant="glass"
+  class={cn('tilt-card relative cursor-default select-none', style.cardClass)}
   style={`
     --accent: ${themeColor};
     --accent-bg: color-mix(in srgb, ${themeColor} 10%, transparent);
-    ${tiltStyle(tiltState)};
+    ${TILT_TRANSFORM_STYLE};
     animation-delay: ${index * ANIMATION_DELAY_STEP_MILLISECONDS}ms;
   `}
   onmouseenter={!isTouchDevice ? onEnter : undefined}
@@ -102,7 +99,9 @@
   ></div>
 
   {#if !isTouchDevice}
-    <div class="tilt-shine" style={shineStyle(tiltState)}></div>
+    <div class="tilt-shine-clip">
+      <div class="tilt-shine-beam" style:opacity={tiltState.active ? 1 : 0}></div>
+    </div>
   {/if}
 
   <Card.Content class={style.contentClass}>

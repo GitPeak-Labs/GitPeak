@@ -48,13 +48,11 @@
     autocorrect="off"
     autocapitalize="off"
     enterkeyhint="search"
-    style="color: var(--text);"
     class={cn(
-      'caret-iris flex-1 touch-manipulation border-none bg-transparent',
-      'px-2 py-3 font-mono text-base tracking-wide shadow-none',
+      'caret-iris flex-1 touch-manipulation border-none bg-transparent text-[color:var(--text)]',
+      'px-2 py-3 font-mono text-[1rem]/6 tracking-wide shadow-none',
       'outline-none placeholder:opacity-30',
       'focus-visible:ring-0 focus-visible:ring-offset-0',
-      'sm:text-base',
     )}
   />
 

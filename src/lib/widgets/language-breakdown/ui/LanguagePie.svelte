@@ -181,7 +181,7 @@
   </Tooltip.Provider>
 {/snippet}
 
-<Card class="glass overflow-hidden rounded-2xl">
+<Card variant="glass" class="rounded-2xl">
   <CardHeader class="p-4 pb-0 sm:p-5">
     <div class="flex items-center justify-between gap-2">
       <span

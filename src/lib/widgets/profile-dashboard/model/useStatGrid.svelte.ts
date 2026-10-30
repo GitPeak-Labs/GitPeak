@@ -1,5 +1,11 @@
 import { SvelteMap } from 'svelte/reactivity'
-import { neutralTilt, applyTilt, type TiltState } from '$lib/shared/lib/mouse-tilt'
+import {
+  applyTilt,
+  clearTiltVariables,
+  neutralTilt,
+  writeTiltVariables,
+  type TiltState,
+} from '$lib/shared/lib/mouse-tilt'
 
 const CARD_COUNT = 8
 
@@ -21,6 +27,7 @@ export function useStatGrid(): StatGridManager {
     },
     onEnter(pointerEvent: MouseEvent, index: number) {
       cachedRects.set(index, (pointerEvent.currentTarget as HTMLElement).getBoundingClientRect())
+      tilts[index] = { ...neutralTilt(), active: true }
     },
     onMove(pointerEvent: MouseEvent, index: number) {
       const target = pointerEvent.currentTarget as HTMLElement
@@ -34,15 +41,16 @@ export function useStatGrid(): StatGridManager {
           rect = target.getBoundingClientRect()
           cachedRects.set(index, rect)
         }
-        tilts[index] = applyTilt({ clientX, clientY } as MouseEvent, target, rect)
+        writeTiltVariables(target, applyTilt({ clientX, clientY } as MouseEvent, target, rect))
       })
     },
-    onLeave(_pointerEvent: MouseEvent, index: number) {
+    onLeave(pointerEvent: MouseEvent, index: number) {
       if (activeRafId !== null) {
         cancelAnimationFrame(activeRafId)
         activeRafId = null
       }
       cachedRects.delete(index)
+      clearTiltVariables(pointerEvent.currentTarget as HTMLElement)
       tilts[index] = neutralTilt()
     },
   }

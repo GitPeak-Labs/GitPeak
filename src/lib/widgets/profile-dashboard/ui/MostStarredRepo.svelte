@@ -14,8 +14,9 @@
 
 {#if repository}
   <Card
+    variant="glass"
     class={cn(
-      'glass overflow-hidden rounded-2xl transition-[border-color,box-shadow,transform]',
+      'rounded-2xl transition-[border-color,box-shadow,transform]',
       'duration-180 ease-out hover:-translate-y-px',
     )}
   >

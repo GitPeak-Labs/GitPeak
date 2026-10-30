@@ -6,7 +6,7 @@
 <script lang="ts">
   import type { ThemeTokens } from '$lib/entities/theme/model/theme-manager'
 
-  const ROUNDED_CARD_CORNER_RADIUS = 24
+  const ROUNDED_CARD_CORNER_RADIUS = 9
 
   let {
     theme,

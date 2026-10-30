@@ -43,7 +43,7 @@ const AFTER_RESPONSE_TIMEOUTS: FetchTimeouts = {
 
 const STATIC_ERROR_SVG =
   '<svg width="480" height="120" viewBox="0 0 480 120" xmlns="http://www.w3.org/2000/svg">' +
-  '<rect width="480" height="120" rx="12" fill="#191724"/>' +
+  '<rect width="480" height="120" rx="6" fill="#191724"/>' +
   '<text x="24" y="66" font-family="monospace" font-size="14" fill="#e0def4">' +
   'GitPeak stats are temporarily unavailable</text></svg>'
 

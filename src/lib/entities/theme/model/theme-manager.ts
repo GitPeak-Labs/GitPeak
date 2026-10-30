@@ -162,6 +162,22 @@ export const TOKEN_LABELS: Record<string, string> = {
 const STORAGE_KEY = 'gitpeak-theme'
 const CUSTOM_TOKENS_KEY = 'gitpeak-theme-tokens'
 const DATA_THEME_ATTRIBUTE = 'data-theme'
+const THEME_SWITCH_ATTRIBUTE = 'data-theme-switch'
+
+function withoutTransitions(applyChange: () => void): void {
+  const root = document.documentElement
+  const generation = String(Number(root.getAttribute(THEME_SWITCH_ATTRIBUTE) ?? 0) + 1)
+  root.setAttribute(THEME_SWITCH_ATTRIBUTE, generation)
+  applyChange()
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (root.getAttribute(THEME_SWITCH_ATTRIBUTE) === generation) {
+        root.removeAttribute(THEME_SWITCH_ATTRIBUTE)
+      }
+    })
+  })
+}
 
 function isThemeTokens(candidate: unknown): candidate is ThemeTokens {
   return (
@@ -214,8 +230,10 @@ export function getTokens(): ThemeTokens {
 }
 
 export function applyTokens(tokens: ThemeTokens): void {
-  Object.entries(tokens).forEach(([key, tokenValue]) => {
-    document.documentElement.style.setProperty(`--${key}`, tokenValue)
+  withoutTransitions(() => {
+    Object.entries(tokens).forEach(([key, tokenValue]) => {
+      document.documentElement.style.setProperty(`--${key}`, tokenValue)
+    })
   })
 }
 
@@ -230,14 +248,18 @@ function setTheme(themeName: string): void {
 
   localStorage.setItem(STORAGE_KEY, themeName)
   localStorage.removeItem(CUSTOM_TOKENS_KEY)
-  document.documentElement.setAttribute(DATA_THEME_ATTRIBUTE, themeName)
-  document.documentElement.removeAttribute('style')
+  withoutTransitions(() => {
+    document.documentElement.setAttribute(DATA_THEME_ATTRIBUTE, themeName)
+    document.documentElement.removeAttribute('style')
+  })
 }
 
 export function previewPreset(themeName: string): void {
   if (typeof window === 'undefined') return
-  document.documentElement.setAttribute(DATA_THEME_ATTRIBUTE, themeName)
-  document.documentElement.removeAttribute('style')
+  withoutTransitions(() => {
+    document.documentElement.setAttribute(DATA_THEME_ATTRIBUTE, themeName)
+    document.documentElement.removeAttribute('style')
+  })
 }
 
 export function applyPreset(themeName: string): void {

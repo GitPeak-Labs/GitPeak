@@ -26,7 +26,7 @@
     'color: #e0def4',
     "font-family: 'DM Mono', monospace",
     'font-size: 13px',
-    'border-radius: 14px',
+    'border-radius: 6px',
   ].join(';')
 </script>
 

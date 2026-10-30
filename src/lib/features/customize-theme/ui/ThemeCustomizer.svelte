@@ -27,14 +27,10 @@
   type="button"
   onclick={() => (isOpen = !isOpen)}
   class={cn(
-    'glass flex items-center gap-2 rounded-xl border px-3',
-    'py-2 font-mono text-xs tracking-wide uppercase',
+    'glass glass-float text-subtle flex items-center gap-2 rounded-xl border px-3',
+    'border-(--border-glass) py-2 font-mono text-xs tracking-wide uppercase',
     'transition-all duration-200',
   )}
-  style="
-    color: var(--subtle);
-    border-color: var(--border-glass);
-  "
   aria-label="Customize theme"
 >
   <Palette size={TOGGLE_ICON_SIZE} />
@@ -58,25 +54,13 @@
   <div
     bind:this={panelElement}
     class={cn(
-      'fixed top-16 right-2 left-2 z-50 flex max-h-[80vh]',
+      'customizer-panel fixed top-16 right-2 left-2 z-50 flex max-h-[80vh]',
       'flex-col overflow-hidden rounded-2xl sm:right-4',
       'sm:left-auto sm:w-[320px]',
     )}
-    style="
-      background: var(--overlay);
-      border: 1px solid color-mix(in srgb, var(--subtle) 20%, transparent);
-      box-shadow: 0 32px 64px -16px rgb(0 0 0 / 60%);
-    "
   >
-    <div
-      class="flex items-center justify-between px-4 py-3"
-      style="border-bottom: 1px solid color-mix(in srgb,
-        var(--highlight-med) 30%, transparent)"
-    >
-      <span
-        class="font-mono text-[0.625rem] tracking-[0.18em] uppercase"
-        style="color: var(--subtle)"
-      >
+    <div class="customizer-header flex items-center justify-between px-4 py-3">
+      <span class="text-subtle font-mono text-[0.625rem] tracking-[0.18em] uppercase">
         Customize
       </span>
       <Button
@@ -95,3 +79,15 @@
     </div>
   </div>
 {/if}
+
+<style>
+  .customizer-panel {
+    background: var(--overlay);
+    border: 1px solid var(--border-panel);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .customizer-header {
+    border-bottom: 1px solid var(--divider);
+  }
+</style>

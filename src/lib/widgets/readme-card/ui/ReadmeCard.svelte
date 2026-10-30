@@ -29,7 +29,7 @@
 
   const PADDING = 36
   const BORDER_INSET = 0.5
-  const BORDER_CORNER_RADIUS = 23.5
+  const BORDER_CORNER_RADIUS = 8.5
   const NAME_BASELINE_Y = 68
   const NAME_FONT_SIZE = 34
   const NAME_TO_TOP_REPO_GAP = 28

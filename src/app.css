@@ -41,6 +41,14 @@
 }
 
 @theme {
+  --radius-xs: 0.375rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.375rem;
+  --radius-2xl: 0.375rem;
+  --radius-3xl: 0.375rem;
+  --radius-4xl: 0.375rem;
   --color-base: var(--base);
   --color-surface: var(--surface);
   --color-overlay: var(--overlay);
@@ -72,6 +80,8 @@
 @layer base {
   :root,
   [data-theme='Rosé Pine'] {
+    color-scheme: dark;
+
     --base: #191724;
     --surface: #1f1d2e;
     --overlay: #26233a;
@@ -110,6 +120,8 @@
   }
 
   [data-theme='Rosé Pine Dawn'] {
+    color-scheme: light;
+
     --base: #faf4ed;
     --surface: #fffaf3;
     --overlay: #f2e9e1;
@@ -146,6 +158,8 @@
   }
 
   [data-theme='Catppuccin Latte'] {
+    color-scheme: light;
+
     --base: #eff1f5;
     --surface: #e6e9ef;
     --overlay: #dce0e8;
@@ -232,89 +246,36 @@
   }
 }
 
+@layer base {
+  :root {
+    --tint-iris: color-mix(in srgb, var(--iris) 10%, transparent);
+    --surface-glass: color-mix(in srgb, var(--surface) 60%, transparent);
+    --surface-floating: color-mix(in srgb, var(--overlay) 92%, transparent);
+    --border-panel: color-mix(in srgb, var(--subtle) 20%, transparent);
+    --divider: color-mix(in srgb, var(--highlight-med) 30%, transparent);
+    --shadow-glass:
+      0 1px 0 0 color-mix(in srgb, var(--text) 6%, transparent) inset,
+      0 32px 64px -16px rgb(0 0 0 / 45%);
+    --shadow-panel: 0 32px 64px -16px rgb(0 0 0 / 60%);
+    --shadow-float: 0 12px 32px -8px rgb(0 0 0 / 50%);
+    --ease-out-expo: var(--ease-out-expo);
+    --ease-out-quart: var(--ease-out-quart);
+  }
+}
+
 @media (width <= 639px) {
   input,
   textarea,
   select {
     font-size: 16px;
   }
+}
 
-  .tilt-card {
-    backdrop-filter: none !important;
-    background: color-mix(in srgb, var(--surface) 85%, transparent) !important;
-  }
-
-  .glass {
-    backdrop-filter: blur(12px) saturate(140%);
-  }
-
+@media (prefers-reduced-motion: reduce) {
   .aurora-bg::before,
   .aurora-bg::after {
-    filter: blur(60px);
+    animation: none;
   }
-}
-
-.aurora-bg {
-  position: fixed;
-  inset: 0;
-  z-index: -10;
-  background-color: var(--base);
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.aurora-bg::before,
-.aurora-bg::after {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-  animation: drift 25s ease-in-out infinite;
-  will-change: transform;
-  transform: translate3d(0, 0, 0);
-}
-
-.aurora-bg::before {
-  width: 70vw;
-  height: 70vw;
-  top: -20%;
-  left: -10%;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--iris) 12%, transparent) 0%,
-    transparent 70%
-  );
-  animation-duration: 20s;
-}
-
-.aurora-bg::after {
-  width: 60vw;
-  height: 60vw;
-  bottom: -15%;
-  right: -10%;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--foam) 10%, transparent) 0%,
-    transparent 70%
-  );
-  animation-duration: 28s;
-  animation-direction: reverse;
-}
-
-.glass {
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
-  backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid color-mix(in srgb, var(--subtle) 15%, transparent);
-  box-shadow:
-    0 1px 0 0 color-mix(in srgb, var(--text) 6%, transparent) inset,
-    0 32px 64px -16px rgb(0 0 0 / 45%);
-}
-
-.gradient-text {
-  color: var(--iris);
-  background: linear-gradient(135deg, var(--iris) 0%, var(--foam) 50%, var(--rose) 100%);
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 @keyframes drift {
@@ -344,10 +305,6 @@
   }
 }
 
-.fade-in-up {
-  animation: fade-in-up 0.5s ease both;
-}
-
 @keyframes bar-grow {
   from {
     clip-path: inset(0 100% 0 0);
@@ -356,10 +313,6 @@
   to {
     clip-path: inset(0 0% 0 0);
   }
-}
-
-.bar-grow {
-  animation: bar-grow 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes pulse-dot {
@@ -375,37 +328,6 @@
   }
 }
 
-.pulse-dot {
-  animation: pulse-dot 1.4s ease-in-out infinite;
-}
-
-.shimmer {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
-  border: 1px solid color-mix(in srgb, var(--highlight-med) 10%, transparent);
-}
-
-.shimmer::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 25%;
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    color-mix(in srgb, var(--iris) 11%, transparent) 40%,
-    color-mix(in srgb, var(--text) 15%, transparent) 50%,
-    color-mix(in srgb, var(--iris) 11%, transparent) 60%,
-    transparent 100%
-  );
-  animation: shimmer 2s ease-in-out infinite;
-}
-
 @keyframes shimmer {
   0% {
     transform: translateX(-100%);
@@ -416,20 +338,22 @@
   }
 }
 
-.tilt-card {
-  will-change: transform;
-  transition:
-    transform 0.1s ease,
-    box-shadow 0.1s ease,
-    border-color 0.1s ease;
-  touch-action: manipulation;
+@property --tilt-x {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
 }
 
-.tilt-shine {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
+@property --tilt-y {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@property --shine-rotation {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
 }
 
 @keyframes row-in {
@@ -444,96 +368,239 @@
   }
 }
 
-.lang-path-group,
-.orbit-path-group {
-  transition: opacity 0.25s ease-in-out;
-  will-change: opacity;
+@layer components {
+  .aurora-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    background-color: var(--base);
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .aurora-bg::before,
+  .aurora-bg::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    animation: drift 25s ease-in-out infinite;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+  }
+
+  .aurora-bg::before {
+    width: 70vw;
+    height: 70vw;
+    top: -20%;
+    left: -10%;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--iris) 12%, transparent) 0%,
+      transparent 70%
+    );
+    animation-duration: 20s;
+  }
+
+  .aurora-bg::after {
+    width: 60vw;
+    height: 60vw;
+    bottom: -15%;
+    right: -10%;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--foam) 10%, transparent) 0%,
+      transparent 70%
+    );
+    animation-duration: 28s;
+    animation-direction: reverse;
+  }
+
+  .glass {
+    background: var(--surface-glass);
+    border: 1px solid color-mix(in srgb, var(--subtle) 15%, transparent);
+    box-shadow: var(--shadow-glass);
+  }
+
+  .glass-float {
+    backdrop-filter: blur(8px);
+  }
+
+  .gradient-text {
+    color: var(--iris);
+    background: linear-gradient(135deg, var(--iris) 0%, var(--foam) 50%, var(--rose) 100%);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .fade-in-up {
+    animation: fade-in-up 0.5s ease both;
+  }
+
+  .bar-grow {
+    animation: bar-grow 0.85s var(--ease-out-expo) both;
+  }
+
+  .pulse-dot {
+    animation: pulse-dot 1.4s ease-in-out infinite;
+  }
+
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--surface-glass);
+    border: 1px solid color-mix(in srgb, var(--highlight-med) 10%, transparent);
+  }
+
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 25%;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--iris) 11%, transparent) 40%,
+      color-mix(in srgb, var(--text) 15%, transparent) 50%,
+      color-mix(in srgb, var(--iris) 11%, transparent) 60%,
+      transparent 100%
+    );
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  .tilt-card {
+    backdrop-filter: none;
+    background: color-mix(in srgb, var(--surface) 85%, transparent);
+    will-change: transform;
+    transition:
+      transform 0.1s ease,
+      box-shadow 0.1s ease,
+      border-color 0.1s ease;
+    touch-action: manipulation;
+  }
+
+  .tilt-shine {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  .tilt-shine-clip {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+  }
+
+  .tilt-shine-beam {
+    position: absolute;
+    inset: -50%;
+    background: linear-gradient(180deg, rgb(255 255 255 / 12%) 25%, transparent 65%);
+    transform: rotate(var(--shine-rotation, 0deg));
+    will-change: transform;
+  }
+
+  .lang-path-group,
+  .orbit-path-group {
+    transition: opacity 0.25s ease-in-out;
+    will-change: opacity;
+  }
+
+  .arc-path {
+    cursor: pointer;
+    transition:
+      opacity 0.18s ease,
+      filter 0.18s ease;
+    touch-action: manipulation;
+  }
+
+  .arc-path.dimmed {
+    opacity: 0.16;
+    filter: saturate(0.12);
+  }
+
+  .lang-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+    border-radius: var(--radius-md);
+    cursor: default;
+    user-select: none;
+    transition:
+      background-color 0.2s ease,
+      transform 0.2s var(--ease-out-quart);
+    touch-action: manipulation;
+    animation: row-in 0.3s ease backwards;
+  }
+
+  .lang-row:hover,
+  .lang-row.active {
+    transform: translateX(1.5px);
+  }
+
+  .pfp-button-group {
+    transition: transform 0.25s var(--ease-out-quart);
+    will-change: transform;
+  }
+
+  .pfp-button-group:hover {
+    transform: translateY(-2.5px);
+  }
+
+  .pfp-button-group:active {
+    transform: translateY(1px);
+  }
+
+  .icon-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      transform 0.2s var(--ease-out-quart);
+  }
+
+  .lang-row:hover .icon-badge,
+  .lang-row.active .icon-badge {
+    transform: scale(1.04);
+  }
+
+  .icon-badge img {
+    width: 13px;
+    height: 13px;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+  }
+
+  .lang-row:hover .icon-badge img,
+  .lang-row.active .icon-badge img {
+    filter: none;
+    opacity: 1;
+  }
+
+  .fade-in {
+    animation: row-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
 }
 
-.arc-path {
-  cursor: pointer;
-  transition:
-    opacity 0.18s ease,
-    filter 0.18s ease;
-  touch-action: manipulation;
-}
-
-.arc-path.dimmed {
-  opacity: 0.16;
-  filter: saturate(0.12);
-}
-
-.lang-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 6px;
-  border-radius: 8px;
-  cursor: default;
-  user-select: none;
-  transition:
-    background-color 0.2s ease,
-    transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
-  touch-action: manipulation;
-  animation: row-in 0.3s ease backwards;
-  will-change: transform;
-}
-
-.lang-row:hover,
-.lang-row.active {
-  transform: translateX(1.5px);
-}
-
-.pfp-button-group {
-  transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
-  will-change: transform;
-}
-
-.pfp-button-group:hover {
-  transform: translateY(-2.5px);
-}
-
-.pfp-button-group:active {
-  transform: translateY(1px);
-}
-
-.icon-badge {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease,
-    transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
-  will-change: transform;
-}
-
-.lang-row:hover .icon-badge,
-.lang-row.active .icon-badge {
-  transform: scale(1.04);
-}
-
-.icon-badge img {
-  width: 13px;
-  height: 13px;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
-  opacity: 0.6;
-  transition: opacity 0.2s ease;
-}
-
-.lang-row:hover .icon-badge img,
-.lang-row.active .icon-badge img {
-  filter: none;
-  opacity: 1;
-}
-
-.fade-in {
-  animation: row-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+:root[data-theme-switch],
+:root[data-theme-switch] *,
+:root[data-theme-switch] *::before,
+:root[data-theme-switch] *::after {
+  transition: none !important;
 }
 
 ::-webkit-scrollbar {

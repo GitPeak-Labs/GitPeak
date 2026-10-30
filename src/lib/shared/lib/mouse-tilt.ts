@@ -29,25 +29,41 @@ export function neutralTilt(): TiltState {
   return { rotateX: 0, rotateY: 0, active: false }
 }
 
-export function tiltStyle(state: TiltState): string {
-  if (!state.active) return 'transform: perspective(1000px) rotateX(0deg) rotateY(0deg)'
+const TILT_X_VARIABLE = '--tilt-x'
+const TILT_Y_VARIABLE = '--tilt-y'
+const SHINE_ROTATION_VARIABLE = '--shine-rotation'
 
-  return `transform: perspective(1000px) rotateX(${state.rotateX}deg) rotateY(${state.rotateY}deg)`
-}
+export const TILT_TRANSFORM_STYLE = [
+  'transform: perspective(1000px)',
+  `rotateX(var(${TILT_X_VARIABLE}, 0deg))`,
+  `rotateY(var(${TILT_Y_VARIABLE}, 0deg))`,
+].join(' ')
 
 const HALF_TURN_DEGREES = 180
 const QUARTER_TURN_DEGREES = 90
 
-export function shineStyle(state: TiltState): string {
-  if (!state.active) return 'opacity: 0'
-
+function shineRotationDegrees(state: TiltState): number {
   const angleRadians = Math.atan2(state.rotateX, state.rotateY)
-  const angleDegrees = (angleRadians * HALF_TURN_DEGREES) / Math.PI + QUARTER_TURN_DEGREES
+  const gradientAngle = (angleRadians * HALF_TURN_DEGREES) / Math.PI + QUARTER_TURN_DEGREES
 
-  return [
-    `background: linear-gradient(${angleDegrees}deg, `,
-    'rgba(255, 255, 255, 0.12) 0%, ',
-    'transparent 80%); ',
-    'opacity: 1;',
-  ].join('')
+  return gradientAngle - HALF_TURN_DEGREES
+}
+
+function findShineBeam(element: HTMLElement): HTMLElement | null {
+  return element.querySelector<HTMLElement>('.tilt-shine-beam')
+}
+
+export function writeTiltVariables(element: HTMLElement, state: TiltState): void {
+  element.style.setProperty(TILT_X_VARIABLE, `${state.rotateX}deg`)
+  element.style.setProperty(TILT_Y_VARIABLE, `${state.rotateY}deg`)
+  findShineBeam(element)?.style.setProperty(
+    SHINE_ROTATION_VARIABLE,
+    `${shineRotationDegrees(state)}deg`,
+  )
+}
+
+export function clearTiltVariables(element: HTMLElement): void {
+  element.style.removeProperty(TILT_X_VARIABLE)
+  element.style.removeProperty(TILT_Y_VARIABLE)
+  findShineBeam(element)?.style.removeProperty(SHINE_ROTATION_VARIABLE)
 }

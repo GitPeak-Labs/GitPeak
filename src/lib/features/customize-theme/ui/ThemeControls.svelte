@@ -25,7 +25,7 @@
   const DASHED_BUTTON_CLASSES = cn(
     'flex cursor-pointer items-center gap-1 rounded-lg',
     'px-2.5 py-1 font-mono text-[0.625rem] transition-all',
-    'duration-150',
+    'dashed-btn duration-150',
   )
 
   let tokens = $state<ThemeTokens>({ ...PRESET_THEMES['Rosé Pine'] })
@@ -113,10 +113,7 @@
 <div class="flex flex-col gap-5">
   <div>
     <div class="mb-2 flex items-center justify-between">
-      <span
-        class="font-mono text-[0.5625rem] tracking-[0.18em] uppercase"
-        style="color: var(--muted)"
-      >
+      <span class="text-muted font-mono text-[0.5625rem] tracking-[0.18em] uppercase">
         Presets
       </span>
       <button
@@ -126,7 +123,6 @@
           'disclosure-btn -mx-1 flex items-center gap-1 rounded px-1.5 py-0.5',
           'font-mono text-[0.5625rem] tracking-[0.1em] uppercase transition-colors',
         )}
-        style="color: var(--muted)"
       >
         <RotateCcw size={RESET_ICON_SIZE} />
         reset
@@ -140,43 +136,21 @@
             applyPreset(name)
           }}
           class={cn(
-            'touch-manipulation rounded-lg border px-2.5 py-1 font-mono text-[0.625rem]',
+            'preset-btn touch-manipulation rounded-lg border px-2.5 py-1 font-mono text-[0.625rem]',
             'transition-all duration-150',
           )}
-          style="
-          border-color: {activePreset === name
-            ? 'color-mix(in srgb, var(--iris) 60%, transparent)'
-            : 'var(--border-glass)'};
-          color: {activePreset === name ? 'var(--iris)' : 'var(--subtle)'};
-          background: {activePreset === name
-            ? 'color-mix(in srgb, var(--iris) 10%, transparent)'
-            : 'transparent'};
-        "
+          data-active={activePreset === name || undefined}
         >
           {name}
         </button>
       {/each}
 
-      <label
-        class={DASHED_BUTTON_CLASSES}
-        style="
-        border: 1px dashed var(--border-glass);
-        color: var(--muted);
-      "
-      >
+      <label class={DASHED_BUTTON_CLASSES}>
         + import CSS
         <input type="file" accept=".css" class="hidden" onchange={importCSS} />
       </label>
 
-      <button
-        type="button"
-        onclick={exportCSS}
-        class={DASHED_BUTTON_CLASSES}
-        style="
-        border: 1px dashed var(--border-glass);
-        color: var(--muted);
-      "
-      >
+      <button type="button" onclick={exportCSS} class={DASHED_BUTTON_CLASSES}>
         ↓ export CSS
       </button>
     </div>
@@ -190,7 +164,6 @@
         'disclosure-btn -mx-1 mb-2 flex items-center gap-1.5 rounded px-1.5 py-1',
         'font-mono text-[0.5625rem] tracking-[0.18em] uppercase',
       )}
-      style="color: var(--muted)"
     >
       <ChevronDown
         size={CHEVRON_ICON_SIZE}
@@ -203,7 +176,7 @@
         {#each tokenKeys as key (key)}
           <div class="flex flex-col">
             <div class="flex items-center justify-between gap-3 py-1">
-              <span class="truncate font-mono text-[0.625rem]" style="color: var(--subtle)">
+              <span class="text-subtle truncate font-mono text-[0.625rem]">
                 {TOKEN_LABELS[key]}
               </span>
               <div class="flex shrink-0 items-center gap-2">
@@ -217,15 +190,9 @@
                     if (/^#[0-9a-fA-F]{6}$/.test(trimmedHexValue)) update(key, trimmedHexValue)
                   }}
                   class={cn(
-                    'w-[84px] rounded-lg px-2 py-1 text-center font-mono',
+                    'hex-input w-[84px] rounded-lg px-2 py-1 text-center font-mono',
                     'transition-all outline-none',
                   )}
-                  style="
-                  background: color-mix(in srgb, var(--overlay) 80%, transparent);
-                  border: 1px solid var(--border-glass);
-                  color: var(--subtle);
-                  font-size: 0.6875rem;
-                "
                   spellcheck="false"
                   maxlength="7"
                 />
@@ -233,16 +200,9 @@
                   type="button"
                   aria-label="Pick color for {TOKEN_LABELS[key]}"
                   onclick={() => (activeKey = activeKey === key ? null : key)}
-                  class="h-7 w-7 shrink-0 touch-manipulation rounded-lg transition-all"
-                  style="
-                  background: {tokens[key]};
-                  border: 1px solid color-mix(in srgb,
-                    var(--highlight-high) 50%, transparent);
-                  box-shadow: {activeKey === key
-                    ? '0 0 0 2px var(--iris)'
-                    : `0 0 0 2px color-mix(in srgb,
-                       ${tokens[key]} 30%, transparent)`};
-                "
+                  class="swatch h-7 w-7 shrink-0 touch-manipulation rounded-lg transition-all"
+                  data-active={activeKey === key || undefined}
+                  style:--swatch={tokens[key]}
                 ></button>
               </div>
             </div>
@@ -254,7 +214,7 @@
                   oncolor-changed={(colorPickerChangeEvent: Event) => {
                     onPickerChange(colorPickerChangeEvent, key)
                   }}
-                  style="width: 100%; height: 160px;"
+                  class="h-40 w-full"
                 ></hex-color-picker>
               </div>
             {/if}
@@ -267,10 +227,11 @@
 
 <style>
   hex-color-picker {
-    --cp-border-radius: 10px;
+    --cp-border-radius: 6px;
   }
 
   .disclosure-btn {
+    color: var(--muted);
     outline: none;
     transition: color 0.15s ease;
     touch-action: manipulation;
@@ -283,5 +244,39 @@
   .disclosure-btn:focus-visible {
     outline: 1px solid color-mix(in srgb, var(--iris) 55%, transparent);
     outline-offset: 2px;
+  }
+
+  .preset-btn {
+    border-color: var(--border-glass);
+    color: var(--subtle);
+    background: transparent;
+  }
+
+  .preset-btn[data-active] {
+    border-color: color-mix(in srgb, var(--iris) 60%, transparent);
+    color: var(--iris);
+    background: var(--tint-iris);
+  }
+
+  .dashed-btn {
+    border: 1px dashed var(--border-glass);
+    color: var(--muted);
+  }
+
+  .hex-input {
+    background: color-mix(in srgb, var(--overlay) 80%, transparent);
+    border: 1px solid var(--border-glass);
+    color: var(--subtle);
+    font-size: 0.6875rem;
+  }
+
+  .swatch {
+    background: var(--swatch);
+    border: 1px solid color-mix(in srgb, var(--highlight-high) 50%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--swatch) 30%, transparent);
+  }
+
+  .swatch[data-active] {
+    box-shadow: 0 0 0 2px var(--iris);
   }
 </style>
