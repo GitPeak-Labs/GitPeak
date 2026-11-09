@@ -11,6 +11,7 @@ const config = {
       mode: 'auto',
       directives: {
         'default-src': ['self'],
+        'manifest-src': ['self'],
         'connect-src': [
           'self',
           'https://ghfetch.amanekai.workers.dev',
